@@ -1,1 +1,1 @@
-var script=document.createElement("script");script.src="http://127.0.0.1:1234/FloatBall.js",document.body.appendChild(script);
+var script=document.createElement("script");script.src="https://cdn.jsdelivr.net/gh/libao123web/demome/FloatBall.js",document.body.appendChild(script);

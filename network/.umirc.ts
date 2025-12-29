@@ -5,22 +5,65 @@ export default defineConfig({
   access: {},
   model: {},
   initialState: {},
-  request: {},
+  request: {
+    dataField: 'data',
+  },
   layout: {
-    title: 'Demo App',
+    title: 'Swagger',
   },
   tailwindcss: {},
+  proxy: {
+    '/api': {
+      target: 'http://49.232.250.11:8080',
+      changeOrigin: true,
+      pathRewrite: { '^/api': '' },
+    },
+  },
   routes: [
     {
-      path: '/',
-      redirect: '/home',
+      path: '/login',
+      component: './Login',
+      layout: false,
     },
     {
-      name: '首页',
-      path: '/home',
-      component: './Home',
+      path: '/',
+      redirect: '/proxy',
+    },
+    {
+      name: '代理',
+      path: '/proxy',
+      icon: 'CloudServerOutlined',
+      component: './Proxy',
+    },
+    {
+      name: '设备/应用',
+      path: '/resource',
+      icon: 'AppstoreOutlined',
+      routes: [
+        {
+          name: '设备',
+          path: '/resource/device',
+          component: './Device',
+        },
+        {
+          name: '应用',
+          path: '/resource/app',
+          component: './App',
+        },
+      ],
+    },
+    {
+      name: '连接器',
+      path: '/connector',
+      icon: 'ApiOutlined',
+      component: './Connector',
+    },
+    {
+      name: '设置',
+      path: '/settings',
+      icon: 'SettingOutlined',
+      component: './Settings',
     },
   ],
   npmClient: 'pnpm',
 });
-

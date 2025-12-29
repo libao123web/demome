@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "demo-app",
+  "packageManager": "pnpm@10.26.0",
   "author": "penglifang <penglifang@penglifang.net>",
   "scripts": {
     "dev": "max dev",

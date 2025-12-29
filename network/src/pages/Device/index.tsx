@@ -1,0 +1,269 @@
+import {
+  ActionType,
+  ModalForm,
+  PageContainer,
+  ProColumns,
+  ProDescriptions,
+  ProFormText,
+  ProFormTextArea,
+  ProTable,
+} from '@ant-design/pro-components';
+import {
+  Button,
+  Drawer,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
+import {
+  DesktopOutlined,
+  ReloadOutlined,
+  InfoCircleOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
+import { useRef, useState } from 'react';
+import { getDeviceList, getDeviceDetail, updateDevice } from '@/services/api';
+import { executeAction, tableRequest } from '@/utils/request';
+
+const { Text } = Typography;
+
+const DevicePage: React.FC = () => {
+  const actionRef = useRef<ActionType>();
+  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentRow, setCurrentRow] = useState<API.Device>();
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const handleViewDetail = async (record: API.Device) => {
+    setDetailDrawerVisible(true);
+    setDetailLoading(true);
+    try {
+      const res = await getDeviceDetail(record.id);
+      if (res.code === 200 && res.data) {
+        setCurrentRow(res.data);
+      } else {
+        setCurrentRow(record);
+      }
+    } catch {
+      setCurrentRow(record);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleEdit = async (values: any) => {
+    if (!currentRow?.id) return false;
+    return executeAction(
+      () =>
+        updateDevice(currentRow.id, {
+          name: values.name,
+          description: values.description,
+        }),
+      {
+        successMessage: '更新成功',
+        errorMessage: '更新失败',
+        onSuccess: () => {
+          setEditModalVisible(false);
+          actionRef.current?.reload();
+        },
+      },
+    );
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const columns: ProColumns<API.Device>[] = [
+    {
+      title: '设备名称',
+      dataIndex: 'name',
+      ellipsis: true,
+      render: (_, record) => (
+        <Space>
+          <DesktopOutlined />
+          <span>{record.name}</span>
+        </Space>
+      ),
+    },
+    {
+      title: '操作系统',
+      dataIndex: 'os',
+      width: 120,
+      search: false,
+    },
+    {
+      title: '版本',
+      dataIndex: 'version',
+      width: 100,
+      search: false,
+    },
+    {
+      title: 'CPU',
+      dataIndex: 'cpu',
+      width: 80,
+      search: false,
+      render: (cpu) => <Tag>{cpu} 核</Tag>,
+    },
+    {
+      title: '内存',
+      dataIndex: 'memory',
+      width: 100,
+      search: false,
+      render: (memory) => formatBytes(memory as number),
+    },
+    {
+      title: '磁盘',
+      dataIndex: 'disk',
+      width: 100,
+      search: false,
+      render: (disk) => formatBytes(disk as number),
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      ellipsis: true,
+      search: false,
+    },
+    {
+      title: '更新时间',
+      dataIndex: 'updated_at',
+      valueType: 'dateTime',
+      width: 180,
+      search: false,
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      width: 150,
+      render: (_, record) => (
+        <Space>
+          <a onClick={() => handleViewDetail(record)}>
+            <InfoCircleOutlined /> 详情
+          </a>
+          <a
+            onClick={() => {
+              setCurrentRow(record);
+              setEditModalVisible(true);
+            }}
+          >
+            <EditOutlined /> 编辑
+          </a>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <PageContainer>
+      <ProTable<API.Device>
+        headerTitle="设备列表"
+        actionRef={actionRef}
+        rowKey="id"
+        columns={columns}
+        request={async (params) => {
+          const { current, pageSize } = params;
+          return tableRequest(
+            () => getDeviceList({ page: current, page_size: pageSize }),
+            'devices',
+          );
+        }}
+        toolBarRender={() => [
+          <Button
+            key="refresh"
+            icon={<ReloadOutlined />}
+            onClick={() => actionRef.current?.reload()}
+          >
+            刷新
+          </Button>,
+        ]}
+        pagination={{
+          defaultPageSize: 10,
+          showSizeChanger: true,
+          showQuickJumper: true,
+        }}
+        search={{
+          labelWidth: 'auto',
+        }}
+        scroll={{ x: 'max-content' }}
+      />
+
+      {/* 设备详情抽屉 */}
+      <Drawer
+        title="设备详情"
+        width={600}
+        open={detailDrawerVisible}
+        onClose={() => setDetailDrawerVisible(false)}
+        loading={detailLoading}
+      >
+        {currentRow && (
+          <ProDescriptions<API.Device>
+            column={1}
+            dataSource={currentRow}
+            columns={[
+              { title: '设备 ID', dataIndex: 'id', copyable: true },
+              { title: '设备名称', dataIndex: 'name' },
+              { title: '操作系统', dataIndex: 'os' },
+              { title: '版本', dataIndex: 'version' },
+              {
+                title: 'CPU',
+                dataIndex: 'cpu',
+                render: (cpu) => `${cpu} 核`,
+              },
+              {
+                title: '内存',
+                dataIndex: 'memory',
+                render: (memory) => formatBytes(memory as number),
+              },
+              {
+                title: '磁盘',
+                dataIndex: 'disk',
+                render: (disk) => formatBytes(disk as number),
+              },
+              { title: '描述', dataIndex: 'description' },
+              {
+                title: '创建时间',
+                dataIndex: 'created_at',
+                valueType: 'dateTime',
+              },
+              {
+                title: '更新时间',
+                dataIndex: 'updated_at',
+                valueType: 'dateTime',
+              },
+            ]}
+          />
+        )}
+      </Drawer>
+
+      {/* 编辑设备弹窗 */}
+      <ModalForm
+        title="编辑设备"
+        open={editModalVisible}
+        onOpenChange={setEditModalVisible}
+        onFinish={handleEdit}
+        initialValues={currentRow}
+        modalProps={{ destroyOnClose: true }}
+        width={500}
+      >
+        <ProFormText
+          name="name"
+          label="设备名称"
+          placeholder="请输入设备名称"
+          rules={[{ required: true, message: '请输入设备名称' }]}
+        />
+        <ProFormTextArea
+          name="description"
+          label="描述"
+          placeholder="请输入设备描述"
+        />
+      </ModalForm>
+    </PageContainer>
+  );
+};
+
+export default DevicePage;

@@ -15,9 +15,9 @@ export async function login(data: API.LoginParams) {
   });
 }
 
-/** 获取当前用户信息 GET /v1/iam/users/current */
+/** 获取当前用户信息 GET /v1/iam/profile */
 export async function getCurrentUser() {
-  return request<API.Response<API.CurrentUser>>('/api/v1/iam/users/current', {
+  return request<API.Response<API.CurrentUser>>('/api/v1/iam/profile', {
     method: 'GET',
   });
 }
@@ -52,21 +52,21 @@ export async function getApplicationList(params?: API.ApplicationListParams) {
 }
 
 /** 创建应用 POST /v1/applications */
-export async function createApplication(params: API.ApplicationCreateParams) {
-  return request<API.Response>('/api/v1/applications', {
+export async function createApplication(data: API.ApplicationCreateParams) {
+  return request<API.Response<API.Application>>('/api/v1/applications', {
     method: 'POST',
-    params,
+    data,
   });
 }
 
 /** 更新应用 PUT /v1/applications/:id */
 export async function updateApplication(
   id: number,
-  params: API.ApplicationUpdateParams,
+  data: API.ApplicationUpdateParams,
 ) {
   return request<API.Response<API.Application>>(`/api/v1/applications/${id}`, {
     method: 'PUT',
-    params,
+    data,
   });
 }
 
@@ -95,10 +95,10 @@ export async function getDeviceDetail(id: number) {
 }
 
 /** 更新设备 PUT /v1/devices/:id */
-export async function updateDevice(id: number, params: API.DeviceUpdateParams) {
+export async function updateDevice(id: number, data: API.DeviceUpdateParams) {
   return request<API.Response<API.Device>>(`/api/v1/devices/${id}`, {
     method: 'PUT',
-    params,
+    data,
   });
 }
 
@@ -126,16 +126,9 @@ export async function checkEdgeOnline(id: number) {
   });
 }
 
-/** 获取安装链接 GET /v1/edges/install-link */
-export async function getEdgeInstallLink() {
-  return request<API.Response<API.EdgeInstallLink>>('/api/v1/edges/install-link', {
-    method: 'GET',
-  });
-}
-
-/** 确认连接器安装 POST /v1/edges */
-export async function confirmEdgeInstall(data: API.EdgeConfirmParams) {
-  return request<API.Response<API.Edge>>('/api/v1/edges', {
+/** 创建连接器 POST /v1/edges */
+export async function createEdge(data: API.EdgeCreateParams) {
+  return request<API.Response<API.EdgeCreateResult>>('/api/v1/edges', {
     method: 'POST',
     data,
   });
@@ -168,12 +161,12 @@ export async function getEdgeScanTask(edgeId: number) {
 }
 
 /** 创建扫描应用任务 POST /v1/edges/:edge_id/scan_application_tasks */
-export async function createEdgeScanTask(params: API.EdgeScanTaskCreateParams) {
+export async function createEdgeScanTask(data: API.EdgeScanTaskCreateParams) {
   return request<API.Response>(
-    `/api/v1/edges/${params.edge_id}/scan_application_tasks`,
+    `/api/v1/edges/${data.edge_id}/scan_application_tasks`,
     {
       method: 'POST',
-      params,
+      data,
     },
   );
 }
@@ -189,18 +182,18 @@ export async function getProxyList(params?: API.PageParams) {
 }
 
 /** 创建代理 POST /v1/proxies */
-export async function createProxy(params: API.ProxyCreateParams) {
+export async function createProxy(data: API.ProxyCreateParams) {
   return request<API.Response<API.Proxy>>('/api/v1/proxies', {
     method: 'POST',
-    params,
+    data,
   });
 }
 
 /** 更新代理 PUT /v1/proxies/:id */
-export async function updateProxy(id: number, params: API.ProxyUpdateParams) {
+export async function updateProxy(id: number, data: API.ProxyUpdateParams) {
   return request<API.Response<API.Proxy>>(`/api/v1/proxies/${id}`, {
     method: 'PUT',
-    params,
+    data,
   });
 }
 

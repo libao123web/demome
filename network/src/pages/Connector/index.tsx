@@ -36,8 +36,7 @@ import {
 import { useRef, useState } from 'react';
 import {
   getEdgeList,
-  getEdgeInstallLink,
-  confirmEdgeInstall,
+  createEdge,
   updateEdge,
   deleteEdge,
   getEdgeScanTask,
@@ -55,34 +54,14 @@ const ConnectorPage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [discoverDrawerVisible, setDiscoverDrawerVisible] = useState(false);
   const [currentRow, setCurrentRow] = useState<API.Edge>();
-  const [installLink, setInstallLink] = useState<API.EdgeInstallLink>();
-  const [loadingLink, setLoadingLink] = useState(false);
+  const [accessKeys, setAccessKeys] = useState<API.EdgeCreateResult>();
   const [scanTask, setScanTask] = useState<API.EdgeScanApplicationTask>();
   const [scanning, setScanning] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
-  const [checkingOnline, setCheckingOnline] = useState(false);
-  const [createSuccess, setCreateSuccess] = useState(false);
 
-  // 打开弹窗时获取安装链接
-  const handleOpenCreateModal = async () => {
+  // 打开创建弹窗
+  const handleOpenCreateModal = () => {
     setCreateModalVisible(true);
-    setInstallLink(undefined);
-    setIsOnline(false);
-    setCreateSuccess(false);
-    setLoadingLink(true);
-    
-    try {
-      const res = await getEdgeInstallLink();
-      if (res.code === 200 && res.data) {
-        setInstallLink(res.data);
-      } else {
-        message.error(res.message || '获取安装链接失败');
-      }
-    } catch {
-      message.error('获取安装链接失败');
-    } finally {
-      setLoadingLink(false);
-    }
+    setAccessKeys(undefined);
   };
 
   const handleDelete = async (id: number) => {
@@ -308,9 +287,7 @@ const ConnectorPage: React.FC = () => {
       <StepsForm
         onFinish={async () => {
           setCreateModalVisible(false);
-          setInstallLink(undefined);
-          setIsOnline(false);
-          setCreateSuccess(false);
+          setAccessKeys(undefined);
           actionRef.current?.reload();
           return true;
         }}
@@ -320,9 +297,7 @@ const ConnectorPage: React.FC = () => {
             open={createModalVisible}
             onCancel={() => {
               setCreateModalVisible(false);
-              setInstallLink(undefined);
-              setIsOnline(false);
-              setCreateSuccess(false);
+              setAccessKeys(undefined);
             }}
             footer={submitter}
             width={650}
@@ -332,108 +307,26 @@ const ConnectorPage: React.FC = () => {
           </Modal>
         )}
       >
-        {/* 步骤1: 获取安装链接并填写名称 */}
+        {/* 步骤1: 填写连接器信息并创建 */}
         <StepsForm.StepForm
-          name="install"
-          title="安装连接器"
-          onFinish={async () => {
-            // 验证是否已获取安装链接
-            if (!installLink) {
-              message.error('请等待安装链接加载完成');
-              return false;
-            }
-            return true;
-          }}
-        >
-          {loadingLink ? (
-            <div className="text-center py-12">
-              <Spin
-                indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />}
-                tip="正在获取安装链接..."
-              />
-            </div>
-          ) : installLink ? (
-            <>
-              <Alert
-                message="请复制下面的安装命令，在目标设备上执行"
-                type="info"
-                showIcon
-                className="mb-4"
-              />
-
-              <div className="space-y-4">
-                <div>
-                  <Text strong>安装命令:</Text>
-                  <div className="bg-gray-100 p-3 rounded-lg mt-2 flex items-center justify-between">
-                    <Text code className="break-all" style={{ flex: 1 }}>
-                      {installLink.install_command || `curl -sSL ${installLink.install_url} | bash`}
-                    </Text>
-                    <Button
-                      type="text"
-                      icon={<CopyOutlined />}
-                      onClick={() => copyToClipboard(installLink.install_command || `curl -sSL ${installLink.install_url} | bash`)}
-                    />
-                  </div>
-                </div>
-
-                {installLink.expires_at && (
-                  <Alert
-                    message={`链接有效期至: ${installLink.expires_at}`}
-                    type="warning"
-                    showIcon
-                  />
-                )}
-
-                <div className="mt-4 text-gray-500 text-sm">
-                  <p>支持的操作系统：Linux (x86_64, arm64)、Windows (x86_64)、macOS (x86_64, arm64)</p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <Result
-              status="error"
-              title="获取安装链接失败"
-              subTitle="请关闭弹窗后重试"
-            />
-          )}
-        </StepsForm.StepForm>
-
-        {/* 步骤2: 填写名称并确认安装 */}
-        <StepsForm.StepForm
-          name="confirm"
-          title="确认安装"
+          name="create"
+          title="创建连接器"
           onFinish={async (values) => {
-            if (!installLink) {
-              message.error('安装链接信息丢失');
-              return false;
-            }
-            
-            setCheckingOnline(true);
             try {
-              const res = await confirmEdgeInstall({
-                link_id: installLink.link_id,
+              const res = await createEdge({
                 name: values.name,
                 description: values.description,
               });
-              
               if (res.code === 200 && res.data) {
-                // 检查设备是否在线
-                if (res.data.online === 1) {
-                  setIsOnline(true);
-                  setCreateSuccess(true);
-                  return true;
-                } else {
-                  message.warning('设备尚未在线，请确认已在目标设备上执行安装命令');
-                  return false;
-                }
+                setAccessKeys(res.data);
+                message.success('连接器创建成功');
+                return true;
               }
-              message.error(res.message || '确认失败');
+              message.error(res.message || '创建失败');
               return false;
             } catch {
-              message.error('确认失败');
+              message.error('创建失败');
               return false;
-            } finally {
-              setCheckingOnline(false);
             }
           }}
         >
@@ -449,19 +342,86 @@ const ConnectorPage: React.FC = () => {
             label="描述"
             placeholder="请输入连接器描述（可选）"
           />
+        </StepsForm.StepForm>
 
-          <Alert
-            message="请确认已在目标设备上执行安装命令"
-            description="点击下一步后，系统将检查设备是否已成功安装并上线"
-            type="info"
-            showIcon
-            className="mt-4"
-          />
+        {/* 步骤2: 显示安装命令 */}
+        <StepsForm.StepForm
+          name="install"
+          title="安装连接器"
+          onFinish={async () => {
+            return true;
+          }}
+        >
+          {accessKeys ? (
+            <>
+              <Alert
+                message="连接器已创建，请复制下面的安装命令在目标设备上执行"
+                type="success"
+                showIcon
+                icon={<CheckCircleOutlined />}
+                className="mb-4"
+              />
 
-          {checkingOnline && (
-            <div className="text-center py-4">
-              <Spin tip="正在检查设备状态..." />
-            </div>
+              <div className="space-y-4">
+                <div>
+                  <Text strong>Access Key:</Text>
+                  <div className="bg-gray-100 p-3 rounded-lg mt-2 flex items-center justify-between">
+                    <Text code className="break-all" style={{ flex: 1 }}>
+                      {accessKeys.access_key}
+                    </Text>
+                    <Button
+                      type="text"
+                      icon={<CopyOutlined />}
+                      onClick={() => copyToClipboard(accessKeys.access_key)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Text strong>Secret Key:</Text>
+                  <div className="bg-gray-100 p-3 rounded-lg mt-2 flex items-center justify-between">
+                    <Text code className="break-all" style={{ flex: 1 }}>
+                      {accessKeys.secret_key}
+                    </Text>
+                    <Button
+                      type="text"
+                      icon={<CopyOutlined />}
+                      onClick={() => copyToClipboard(accessKeys.secret_key)}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Text strong>安装命令:</Text>
+                  <div className="bg-gray-100 p-3 rounded-lg mt-2">
+                    <Paragraph
+                      copyable
+                      className="mb-0 text-sm"
+                      style={{ marginBottom: 0, wordBreak: 'break-all' }}
+                    >
+                      {`curl -sSL http://49.232.250.11:8080/install.sh | bash -s -- --access-key=${accessKeys.access_key} --secret-key=${accessKeys.secret_key}`}
+                    </Paragraph>
+                  </div>
+                </div>
+
+                <Alert
+                  message="请妥善保管以上密钥信息，关闭后将无法再次查看"
+                  type="warning"
+                  showIcon
+                  className="mt-4"
+                />
+
+                <div className="mt-4 text-gray-500 text-sm">
+                  <p>支持的操作系统：Linux (x86_64, arm64)、Windows (x86_64)、macOS (x86_64, arm64)</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <Result
+              status="error"
+              title="未获取到密钥信息"
+              subTitle="请返回上一步重新创建"
+            />
           )}
         </StepsForm.StepForm>
 
@@ -470,11 +430,7 @@ const ConnectorPage: React.FC = () => {
           <Result
             status="success"
             title="连接器创建成功"
-            subTitle={
-              isOnline
-                ? '设备已成功上线，您可以在连接器列表中管理该连接器'
-                : '连接器已创建，设备上线后将自动显示在列表中'
-            }
+            subTitle="安装完成后，连接器将自动上线。您可以在连接器列表中查看状态。"
             extra={
               <Text type="secondary">
                 点击"完成"按钮关闭此窗口

@@ -120,21 +120,6 @@ declare namespace API {
     description?: string;
   }
 
-  /** 安装链接信息 */
-  interface EdgeInstallLink {
-    link_id: string;
-    install_url: string;
-    install_command: string;
-    expires_at?: string;
-  }
-
-  /** 确认安装参数 */
-  interface EdgeConfirmParams {
-    link_id: string;
-    name: string;
-    description?: string;
-  }
-
   interface EdgeCreateResult {
     access_key: string;
     secret_key: string;

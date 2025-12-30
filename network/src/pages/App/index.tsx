@@ -117,6 +117,7 @@ const AppPage: React.FC = () => {
       title: '类型',
       dataIndex: 'application_type',
       width: 100,
+      search: false,
       valueEnum: {
         web: { text: 'Web', status: 'Processing' },
         tcp: { text: 'TCP', status: 'Success' },
@@ -195,9 +196,16 @@ const AppPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize } = params;
+          const { current, pageSize, name } = params;
+          const searchParams: API.ApplicationListParams = {
+            page: current,
+            page_size: pageSize,
+          };
+          if (name) {
+            searchParams.name = name;
+          }
           return tableRequest(
-            () => getApplicationList({ page: current, page_size: pageSize }),
+            () => getApplicationList(searchParams),
             'applications',
           );
         }}

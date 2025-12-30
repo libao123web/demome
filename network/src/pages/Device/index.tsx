@@ -166,9 +166,16 @@ const DevicePage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize } = params;
+          const { current, pageSize, name } = params;
+          const searchParams: API.DeviceListParams = {
+            page: current,
+            page_size: pageSize,
+          };
+          if (name) {
+            searchParams.name = name;
+          }
           return tableRequest(
-            () => getDeviceList({ page: current, page_size: pageSize }),
+            () => getDeviceList(searchParams),
             'devices',
           );
         }}

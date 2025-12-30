@@ -119,6 +119,7 @@ const ProxyPage: React.FC = () => {
       title: '状态',
       dataIndex: 'status',
       width: 100,
+      search: false,
       valueEnum: {
         running: { text: '运行中', status: 'Success' },
         stopped: { text: '已停止', status: 'Default' },
@@ -165,9 +166,16 @@ const ProxyPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize } = params;
+          const { current, pageSize, name } = params;
+          const searchParams: API.ProxyListParams = {
+            page: current,
+            page_size: pageSize,
+          };
+          if (name) {
+            searchParams.name = name;
+          }
           return tableRequest(
-            () => getProxyList({ page: current, page_size: pageSize }),
+            () => getProxyList(searchParams),
             'proxies',
           );
         }}

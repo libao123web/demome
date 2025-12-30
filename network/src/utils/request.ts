@@ -51,11 +51,18 @@ export async function tableRequest<T = any>(
 }> {
   try {
     const res = await fetcher();
+    if (res.code !== SUCCESS_CODE) {
+      return {
+        data: [],
+        total: 0,
+        success: false,
+      };
+    }
     const data = res.data?.[dataKey] || [];
     return {
       data,
       total: res.data?.total || 0,
-      success: res.code === SUCCESS_CODE,
+      success: true,
     };
   } catch {
     return {

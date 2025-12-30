@@ -93,6 +93,12 @@ const ConnectorPage: React.FC = () => {
   };
 
   const handleDiscoverApps = async (edge: API.Edge) => {
+    // 检查连接器是否在线
+    if (edge.online !== 1) {
+      message.warning('连接器不在线，无法发现应用');
+      return;
+    }
+
     setCurrentRow(edge);
     setDiscoverDrawerVisible(true);
     setScanning(true);
@@ -100,14 +106,24 @@ const ConnectorPage: React.FC = () => {
 
     try {
       // 先创建扫描任务
-      await createEdgeScanTask({ edge_id: edge.id });
+      const createRes = await createEdgeScanTask({ 
+        edge_id: edge.id,
+        protocol: 'tcp',
+      });
+      if (createRes.code !== 200) {
+        message.error(createRes.message || '创建扫描任务失败');
+        setScanning(false);
+        return;
+      }
+      // 等待一小段时间让扫描任务启动
+      await new Promise(resolve => setTimeout(resolve, 1000));
       // 然后获取扫描结果
       const res = await getEdgeScanTask(edge.id);
       if (res.code === 200 && res.data) {
         setScanTask(res.data);
       }
-    } catch (error) {
-      message.error('扫描失败');
+    } catch (error: any) {
+      message.error(error?.message || '扫描失败');
     } finally {
       setScanning(false);
     }
@@ -180,6 +196,7 @@ const ConnectorPage: React.FC = () => {
       title: '在线状态',
       dataIndex: 'online',
       width: 100,
+      search: false,
       valueEnum: {
         1: { text: '在线', status: 'Success' },
         0: { text: '离线', status: 'Default' },
@@ -195,6 +212,7 @@ const ConnectorPage: React.FC = () => {
       title: '运行状态',
       dataIndex: 'status',
       width: 100,
+      search: false,
       valueEnum: {
         1: { text: '运行中', status: 'Processing' },
         2: { text: '已停止', status: 'Default' },
@@ -249,9 +267,17 @@ const ConnectorPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize } = params;
+          const { current, pageSize, name } = params;
+          // 过滤空值，只传有效的搜索参数
+          const searchParams: API.EdgeListParams = {
+            page: current,
+            page_size: pageSize,
+          };
+          if (name) {
+            searchParams.name = name;
+          }
           return tableRequest(
-            () => getEdgeList({ page: current, page_size: pageSize }),
+            () => getEdgeList(searchParams),
             'edges',
           );
         }}

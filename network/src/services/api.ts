@@ -80,7 +80,7 @@ export async function deleteApplication(id: number) {
 // ==================== 设备管理 (Devices) ====================
 
 /** 获取设备列表 GET /v1/devices */
-export async function getDeviceList(params?: API.PageParams) {
+export async function getDeviceList(params?: API.DeviceListParams) {
   return request<API.Response<API.DeviceListResult>>('/api/v1/devices', {
     method: 'GET',
     params,
@@ -105,7 +105,7 @@ export async function updateDevice(id: number, data: API.DeviceUpdateParams) {
 // ==================== 连接器/边缘节点 (Edges) ====================
 
 /** 获取连接器列表 GET /v1/edges */
-export async function getEdgeList(params?: API.PageParams) {
+export async function getEdgeList(params?: API.EdgeListParams) {
   return request<API.Response<API.EdgeListResult>>('/api/v1/edges', {
     method: 'GET',
     params,
@@ -174,7 +174,7 @@ export async function createEdgeScanTask(data: API.EdgeScanTaskCreateParams) {
 // ==================== 代理管理 (Proxies) ====================
 
 /** 获取代理列表 GET /v1/proxies */
-export async function getProxyList(params?: API.PageParams) {
+export async function getProxyList(params?: API.ProxyListParams) {
   return request<API.Response<API.ProxyListResult>>('/api/v1/proxies', {
     method: 'GET',
     params,

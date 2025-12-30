@@ -55,6 +55,8 @@ declare namespace API {
 
   interface ApplicationListParams extends PageParams {
     device_id?: number;
+    name?: string;
+    application_type?: string;
   }
 
   interface ApplicationListResult {
@@ -94,6 +96,10 @@ declare namespace API {
     total: number;
   }
 
+  interface DeviceListParams extends PageParams {
+    name?: string;
+  }
+
   interface DeviceUpdateParams {
     name?: string;
     description?: string;
@@ -113,6 +119,10 @@ declare namespace API {
   interface EdgeListResult {
     edges: Edge[];
     total: number;
+  }
+
+  interface EdgeListParams extends PageParams {
+    name?: string;
   }
 
   interface EdgeCreateParams {
@@ -163,6 +173,10 @@ declare namespace API {
   interface ProxyListResult {
     proxies: Proxy[];
     total: number;
+  }
+
+  interface ProxyListParams extends PageParams {
+    name?: string;
   }
 
   interface ProxyCreateParams {

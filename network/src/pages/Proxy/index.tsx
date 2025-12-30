@@ -9,8 +9,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { Button, Popconfirm, Space, Tag, Typography } from 'antd';
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Space, Tag, Typography } from 'antd';
 import { useRef, useState } from 'react';
 import {
   getProxyList,
@@ -20,6 +19,8 @@ import {
   getApplicationList,
 } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
+import { RefreshButton, CreateButton, EditLink, DeleteLink } from '@/components/TableButtons';
+import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
 
 const { Text } = Typography;
 
@@ -29,21 +30,22 @@ const ProxyPage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentRow, setCurrentRow] = useState<API.Proxy>();
 
+  const reload = () => actionRef.current?.reload();
+
   const handleAdd = async (values: any) => {
     return executeAction(
-      () =>
-        createProxy({
-          name: values.name,
-          description: values.description,
-          port: values.port,
-          application_id: values.application_id,
-        }),
+      () => createProxy({
+        name: values.name,
+        description: values.description,
+        port: values.port,
+        application_id: values.application_id,
+      }),
       {
         successMessage: '创建成功',
         errorMessage: '创建失败',
         onSuccess: () => {
           setCreateModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
@@ -52,19 +54,18 @@ const ProxyPage: React.FC = () => {
   const handleEdit = async (values: any) => {
     if (!currentRow?.id) return false;
     return executeAction(
-      () =>
-        updateProxy(currentRow.id, {
-          name: values.name,
-          description: values.description,
-          port: values.port,
-          status: values.status,
-        }),
+      () => updateProxy(currentRow.id, {
+        name: values.name,
+        description: values.description,
+        port: values.port,
+        status: values.status,
+      }),
       {
         successMessage: '更新成功',
         errorMessage: '更新失败',
         onSuccess: () => {
           setEditModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
@@ -74,7 +75,7 @@ const ProxyPage: React.FC = () => {
     await executeAction(() => deleteProxy(id), {
       successMessage: '删除成功',
       errorMessage: '删除失败',
-      onSuccess: () => actionRef.current?.reload(),
+      onSuccess: reload,
     });
   };
 
@@ -139,20 +140,14 @@ const ProxyPage: React.FC = () => {
       width: 150,
       render: (_, record) => (
         <Space>
-          <a
-            onClick={() => {
-              setCurrentRow(record);
-              setEditModalVisible(true);
-            }}
-          >
-            编辑
-          </a>
-          <Popconfirm
+          <EditLink onClick={() => {
+            setCurrentRow(record);
+            setEditModalVisible(true);
+          }} />
+          <DeleteLink
             title="确定要删除这个代理吗？"
             onConfirm={() => handleDelete(record.id)}
-          >
-            <a className="text-red-500">删除</a>
-          </Popconfirm>
+          />
         </Space>
       ),
     },
@@ -166,44 +161,17 @@ const ProxyPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize, name } = params;
-          const searchParams: API.ProxyListParams = {
-            page: current,
-            page_size: pageSize,
-          };
-          if (name) {
-            searchParams.name = name;
-          }
-          return tableRequest(
-            () => getProxyList(searchParams),
-            'proxies',
-          );
+          const searchParams = buildSearchParams<API.ProxyListParams>(params, ['name']);
+          return tableRequest(() => getProxyList(searchParams), 'proxies');
         }}
         toolBarRender={() => [
-          <Button
-            key="refresh"
-            icon={<ReloadOutlined />}
-            onClick={() => actionRef.current?.reload()}
-          >
-            刷新
-          </Button>,
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-          >
+          <RefreshButton key="refresh" onClick={reload} />,
+          <CreateButton key="create" onClick={() => setCreateModalVisible(true)}>
             新建代理
-          </Button>,
+          </CreateButton>,
         ]}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
-        search={{
-          labelWidth: 'auto',
-        }}
+        pagination={defaultPagination}
+        search={defaultSearch}
         scroll={{ x: 'max-content' }}
       />
 

@@ -8,24 +8,14 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import {
-  Button,
-  Drawer,
-  Space,
-  Tag,
-  Typography,
-} from 'antd';
-import {
-  DesktopOutlined,
-  ReloadOutlined,
-  InfoCircleOutlined,
-  EditOutlined,
-} from '@ant-design/icons';
+import { Drawer, Space, Tag } from 'antd';
+import { DesktopOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useRef, useState } from 'react';
 import { getDeviceList, getDeviceDetail, updateDevice } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
-
-const { Text } = Typography;
+import { RefreshButton } from '@/components/TableButtons';
+import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
+import { formatBytes } from '@/utils/format';
 
 const DevicePage: React.FC = () => {
   const actionRef = useRef<ActionType>();
@@ -33,6 +23,8 @@ const DevicePage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentRow, setCurrentRow] = useState<API.Device>();
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const reload = () => actionRef.current?.reload();
 
   const handleViewDetail = async (record: API.Device) => {
     setDetailDrawerVisible(true);
@@ -54,28 +46,19 @@ const DevicePage: React.FC = () => {
   const handleEdit = async (values: any) => {
     if (!currentRow?.id) return false;
     return executeAction(
-      () =>
-        updateDevice(currentRow.id, {
-          name: values.name,
-          description: values.description,
-        }),
+      () => updateDevice(currentRow.id, {
+        name: values.name,
+        description: values.description,
+      }),
       {
         successMessage: '更新成功',
         errorMessage: '更新失败',
         onSuccess: () => {
           setEditModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const columns: ProColumns<API.Device>[] = [
@@ -145,12 +128,10 @@ const DevicePage: React.FC = () => {
           <a onClick={() => handleViewDetail(record)}>
             <InfoCircleOutlined /> 详情
           </a>
-          <a
-            onClick={() => {
-              setCurrentRow(record);
-              setEditModalVisible(true);
-            }}
-          >
+          <a onClick={() => {
+            setCurrentRow(record);
+            setEditModalVisible(true);
+          }}>
             <EditOutlined /> 编辑
           </a>
         </Space>
@@ -166,36 +147,14 @@ const DevicePage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize, name } = params;
-          const searchParams: API.DeviceListParams = {
-            page: current,
-            page_size: pageSize,
-          };
-          if (name) {
-            searchParams.name = name;
-          }
-          return tableRequest(
-            () => getDeviceList(searchParams),
-            'devices',
-          );
+          const searchParams = buildSearchParams<API.DeviceListParams>(params, ['name']);
+          return tableRequest(() => getDeviceList(searchParams), 'devices');
         }}
         toolBarRender={() => [
-          <Button
-            key="refresh"
-            icon={<ReloadOutlined />}
-            onClick={() => actionRef.current?.reload()}
-          >
-            刷新
-          </Button>,
+          <RefreshButton key="refresh" onClick={reload} />,
         ]}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
-        search={{
-          labelWidth: 'auto',
-        }}
+        pagination={defaultPagination}
+        search={defaultSearch}
         scroll={{ x: 'max-content' }}
       />
 
@@ -216,32 +175,12 @@ const DevicePage: React.FC = () => {
               { title: '设备名称', dataIndex: 'name' },
               { title: '操作系统', dataIndex: 'os' },
               { title: '版本', dataIndex: 'version' },
-              {
-                title: 'CPU',
-                dataIndex: 'cpu',
-                render: (cpu) => `${cpu} 核`,
-              },
-              {
-                title: '内存',
-                dataIndex: 'memory',
-                render: (memory) => formatBytes(memory as number),
-              },
-              {
-                title: '磁盘',
-                dataIndex: 'disk',
-                render: (disk) => formatBytes(disk as number),
-              },
+              { title: 'CPU', dataIndex: 'cpu', render: (cpu) => `${cpu} 核` },
+              { title: '内存', dataIndex: 'memory', render: (memory) => formatBytes(memory as number) },
+              { title: '磁盘', dataIndex: 'disk', render: (disk) => formatBytes(disk as number) },
               { title: '描述', dataIndex: 'description' },
-              {
-                title: '创建时间',
-                dataIndex: 'created_at',
-                valueType: 'dateTime',
-              },
-              {
-                title: '更新时间',
-                dataIndex: 'updated_at',
-                valueType: 'dateTime',
-              },
+              { title: '创建时间', dataIndex: 'created_at', valueType: 'dateTime' },
+              { title: '更新时间', dataIndex: 'updated_at', valueType: 'dateTime' },
             ]}
           />
         )}

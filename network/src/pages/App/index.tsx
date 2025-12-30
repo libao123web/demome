@@ -8,13 +8,8 @@ import {
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components';
-import { Button, Popconfirm, Space, Tag, Typography } from 'antd';
-import {
-  PlusOutlined,
-  ReloadOutlined,
-  LinkOutlined,
-  ApiOutlined,
-} from '@ant-design/icons';
+import { Space, Tag, Typography } from 'antd';
+import { LinkOutlined, ApiOutlined, EditOutlined } from '@ant-design/icons';
 import { useRef, useState } from 'react';
 import {
   getApplicationList,
@@ -25,6 +20,8 @@ import {
   createProxy,
 } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
+import { RefreshButton, CreateButton, DeleteLink } from '@/components/TableButtons';
+import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
 
 const { Text } = Typography;
 
@@ -34,6 +31,8 @@ const AppPage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [proxyModalVisible, setProxyModalVisible] = useState(false);
   const [currentRow, setCurrentRow] = useState<API.Application>();
+
+  const reload = () => actionRef.current?.reload();
 
   const handleAdd = async (values: any) => {
     return executeAction(
@@ -51,7 +50,7 @@ const AppPage: React.FC = () => {
         errorMessage: '创建失败',
         onSuccess: () => {
           setCreateModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
@@ -66,7 +65,7 @@ const AppPage: React.FC = () => {
         errorMessage: '更新失败',
         onSuccess: () => {
           setEditModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
@@ -76,7 +75,7 @@ const AppPage: React.FC = () => {
     await executeAction(() => deleteApplication(id), {
       successMessage: '删除成功',
       errorMessage: '删除失败',
-      onSuccess: () => actionRef.current?.reload(),
+      onSuccess: reload,
     });
   };
 
@@ -95,7 +94,7 @@ const AppPage: React.FC = () => {
         errorMessage: '代理创建失败',
         onSuccess: () => {
           setProxyModalVisible(false);
-          actionRef.current?.reload();
+          reload();
         },
       },
     );
@@ -161,28 +160,22 @@ const AppPage: React.FC = () => {
       width: 200,
       render: (_, record) => (
         <Space>
-          <a
-            onClick={() => {
-              setCurrentRow(record);
-              setProxyModalVisible(true);
-            }}
-          >
+          <a onClick={() => {
+            setCurrentRow(record);
+            setProxyModalVisible(true);
+          }}>
             <LinkOutlined /> 创建代理
           </a>
-          <a
-            onClick={() => {
-              setCurrentRow(record);
-              setEditModalVisible(true);
-            }}
-          >
-            编辑
+          <a onClick={() => {
+            setCurrentRow(record);
+            setEditModalVisible(true);
+          }}>
+            <EditOutlined /> 编辑
           </a>
-          <Popconfirm
+          <DeleteLink
             title="确定要删除这个应用吗？"
             onConfirm={() => handleDelete(record.id)}
-          >
-            <a className="text-red-500">删除</a>
-          </Popconfirm>
+          />
         </Space>
       ),
     },
@@ -196,44 +189,17 @@ const AppPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const { current, pageSize, name } = params;
-          const searchParams: API.ApplicationListParams = {
-            page: current,
-            page_size: pageSize,
-          };
-          if (name) {
-            searchParams.name = name;
-          }
-          return tableRequest(
-            () => getApplicationList(searchParams),
-            'applications',
-          );
+          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name']);
+          return tableRequest(() => getApplicationList(searchParams), 'applications');
         }}
         toolBarRender={() => [
-          <Button
-            key="refresh"
-            icon={<ReloadOutlined />}
-            onClick={() => actionRef.current?.reload()}
-          >
-            刷新
-          </Button>,
-          <Button
-            key="create"
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-          >
+          <RefreshButton key="refresh" onClick={reload} />,
+          <CreateButton key="create" onClick={() => setCreateModalVisible(true)}>
             新建应用
-          </Button>,
+          </CreateButton>,
         ]}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
-        search={{
-          labelWidth: 'auto',
-        }}
+        pagination={defaultPagination}
+        search={defaultSearch}
         scroll={{ x: 'max-content' }}
       />
 

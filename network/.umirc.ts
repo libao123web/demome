@@ -8,6 +8,7 @@ export default defineConfig({
   request: {
     dataField: 'data',
   },
+  esbuildMinifyIIFE: true,
   layout: {
     title: 'Swagger',
   },

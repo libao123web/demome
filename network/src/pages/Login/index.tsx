@@ -3,6 +3,7 @@ import { LoginForm, ProFormText } from '@ant-design/pro-components';
 import { history, useModel } from '@umijs/max';
 import { message } from 'antd';
 import { login } from '@/services/api';
+import { APP_NAME } from '@/constants';
 import './index.less';
 
 const Login: React.FC = () => {
@@ -37,12 +38,7 @@ const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-content">
         <div className="login-header">
-          <img
-            className="login-logo"
-            src="https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg"
-            alt="logo"
-          />
-          <span className="login-title">Swagger</span>
+          <span className="login-title">{APP_NAME}</span>
         </div>
         <div className="login-desc">安全、可靠的网络服务</div>
         
@@ -95,7 +91,7 @@ const Login: React.FC = () => {
         </LoginForm>
         
         <div className="login-footer">
-          <p>© 2024 Swagger. All rights reserved.</p>
+          <p>© 2024 {APP_NAME}. All rights reserved.</p>
         </div>
       </div>
     </div>

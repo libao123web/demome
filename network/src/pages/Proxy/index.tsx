@@ -19,7 +19,7 @@ import {
   getApplicationList,
 } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
-import { RefreshButton, CreateButton, EditLink, DeleteLink } from '@/components/TableButtons';
+import { CreateButton, EditLink, DeleteLink } from '@/components/TableButtons';
 import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
 
 const { Text } = Typography;
@@ -165,7 +165,6 @@ const ProxyPage: React.FC = () => {
           return tableRequest(() => getProxyList(searchParams), 'proxies');
         }}
         toolBarRender={() => [
-          <RefreshButton key="refresh" onClick={reload} />,
           <CreateButton key="create" onClick={() => setCreateModalVisible(true)}>
             新建代理
           </CreateButton>,

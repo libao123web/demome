@@ -13,9 +13,8 @@ import { DesktopOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/i
 import { useRef, useState } from 'react';
 import { getDeviceList, getDeviceDetail, updateDevice } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
-import { RefreshButton } from '@/components/TableButtons';
 import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
-import { formatBytes } from '@/utils/format';
+import { formatMBSize } from '@/utils/format';
 
 const DevicePage: React.FC = () => {
   const actionRef = useRef<ActionType>();
@@ -97,14 +96,14 @@ const DevicePage: React.FC = () => {
       dataIndex: 'memory',
       width: 100,
       search: false,
-      render: (memory) => formatBytes(memory as number),
+      render: (memory) => formatMBSize(memory as number),
     },
     {
       title: '磁盘',
       dataIndex: 'disk',
       width: 100,
       search: false,
-      render: (disk) => formatBytes(disk as number),
+      render: (disk) => formatMBSize(disk as number),
     },
     {
       title: '描述',
@@ -150,9 +149,6 @@ const DevicePage: React.FC = () => {
           const searchParams = buildSearchParams<API.DeviceListParams>(params, ['name']);
           return tableRequest(() => getDeviceList(searchParams), 'devices');
         }}
-        toolBarRender={() => [
-          <RefreshButton key="refresh" onClick={reload} />,
-        ]}
         pagination={defaultPagination}
         search={defaultSearch}
         scroll={{ x: 'max-content' }}
@@ -176,8 +172,8 @@ const DevicePage: React.FC = () => {
               { title: '操作系统', dataIndex: 'os' },
               { title: '版本', dataIndex: 'version' },
               { title: 'CPU', dataIndex: 'cpu', render: (cpu) => `${cpu} 核` },
-              { title: '内存', dataIndex: 'memory', render: (memory) => formatBytes(memory as number) },
-              { title: '磁盘', dataIndex: 'disk', render: (disk) => formatBytes(disk as number) },
+              { title: '内存', dataIndex: 'memory', render: (memory) => formatMBSize(memory as number) },
+              { title: '磁盘', dataIndex: 'disk', render: (disk) => formatMBSize(disk as number) },
               { title: '描述', dataIndex: 'description' },
               { title: '创建时间', dataIndex: 'created_at', valueType: 'dateTime' },
               { title: '更新时间', dataIndex: 'updated_at', valueType: 'dateTime' },

@@ -16,19 +16,65 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
+ * 格式化 MB 为人类可读的大小
+ * @param mb MB 数值
+ * @returns 格式化后的字符串，如 "960 MB" 或 "39.26 GB"
+ */
+export function formatMBSize(mb: number): string {
+  if (mb === 0) return '0 MB';
+  if (mb < 1024) {
+    return `${mb.toFixed(0)} MB`;
+  }
+  // 转换为 GB
+  const gb = mb / 1024;
+  if (gb < 1024) {
+    return `${gb.toFixed(2)} GB`;
+  }
+  // 转换为 TB
+  const tb = gb / 1024;
+  return `${tb.toFixed(2)} TB`;
+}
+
+/**
  * 复制文本到剪贴板
  * @param text 要复制的文本
  * @param successMessage 复制成功提示消息
  */
 export async function copyToClipboard(text: string, successMessage = '已复制到剪贴板'): Promise<boolean> {
+  const { message } = await import('antd');
+  
   try {
-    await navigator.clipboard.writeText(text);
-    const { message } = await import('antd');
-    message.success(successMessage);
-    return true;
-  } catch {
-    const { message } = await import('antd');
-    message.error('复制失败');
+    // 优先使用 navigator.clipboard API (需要 HTTPS 或 localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      message.success(successMessage);
+      return true;
+    }
+    
+    // 降级方案：使用 document.execCommand
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    // 避免滚动到文本区域
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      message.success(successMessage);
+      return true;
+    } else {
+      message.error('复制失败，请手动复制');
+      return false;
+    }
+  } catch (err) {
+    console.error('复制失败:', err);
+    message.error('复制失败，请手动复制');
     return false;
   }
 }

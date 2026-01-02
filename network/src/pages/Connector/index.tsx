@@ -6,6 +6,7 @@ import {
   StepsForm,
   ProFormText,
   ProFormTextArea,
+  ProFormSelect,
   ModalForm,
 } from '@ant-design/pro-components';
 import {
@@ -41,7 +42,7 @@ import {
   createApplication,
 } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
-import { RefreshButton, CreateButton, DeleteLink } from '@/components/TableButtons';
+import { CreateButton, DeleteLink } from '@/components/TableButtons';
 import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
 import { copyToClipboard } from '@/utils/format';
 
@@ -94,7 +95,7 @@ const ConnectorPage: React.FC = () => {
 
   const handleDiscoverApps = async (edge: API.Edge) => {
     if (edge.online !== 1) {
-      message.warning('连接器不在线，无法发现应用');
+      message.warning('连接器不在线，无法扫描应用');
       return;
     }
 
@@ -104,6 +105,25 @@ const ConnectorPage: React.FC = () => {
     setScanTask(undefined);
 
     try {
+      // 先查找是否有已存在的任务
+      const existingRes = await getEdgeScanTask(edge.id);
+      if (existingRes.code === 200 && existingRes.data) {
+        const task = existingRes.data;
+        // 如果有 Pending 或 Running 任务，直接展示
+        if (task.task_status === 'pending' || task.task_status === 'running') {
+          setScanTask(task);
+          setScanning(false);
+          return;
+        }
+        // 如果有 Completed 或 Failed 任务，直接展示（用户可以选择重新扫描）
+        if (task.task_status === 'completed' || task.task_status === 'failed') {
+          setScanTask(task);
+          setScanning(false);
+          return;
+        }
+      }
+
+      // 没有任务或任务状态允许创建新任务，则创建新的扫描任务
       const createRes = await createEdgeScanTask({ 
         edge_id: edge.id,
         protocol: 'tcp',
@@ -115,6 +135,34 @@ const ConnectorPage: React.FC = () => {
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
       const res = await getEdgeScanTask(edge.id);
+      if (res.code === 200 && res.data) {
+        setScanTask(res.data);
+      }
+    } catch (error: any) {
+      message.error(error?.message || '扫描失败');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  // 重新扫描应用（强制创建新任务）
+  const handleRescan = async () => {
+    if (!currentRow?.id) return;
+    setScanning(true);
+    setScanTask(undefined);
+
+    try {
+      const createRes = await createEdgeScanTask({ 
+        edge_id: currentRow.id,
+        protocol: 'tcp',
+      });
+      if (createRes.code !== 200) {
+        message.error(createRes.message || '创建扫描任务失败');
+        setScanning(false);
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const res = await getEdgeScanTask(currentRow.id);
       if (res.code === 200 && res.data) {
         setScanTask(res.data);
       }
@@ -174,6 +222,7 @@ const ConnectorPage: React.FC = () => {
       title: '连接器名称',
       dataIndex: 'name',
       ellipsis: true,
+      width: 150,
     },
     {
       title: '描述',
@@ -212,13 +261,21 @@ const ConnectorPage: React.FC = () => {
       search: false,
     },
     {
+      title: '更新时间',
+      dataIndex: 'updated_at',
+      valueType: 'dateTime',
+      width: 180,
+      search: false,
+      hideInTable: true, // 默认隐藏，可通过列设置显示
+    },
+    {
       title: '操作',
       valueType: 'option',
       width: 220,
       render: (_, record) => (
         <Space>
           <a onClick={() => handleDiscoverApps(record)}>
-            <SearchOutlined /> 发现应用
+            <SearchOutlined /> 扫描应用
           </a>
           <a onClick={() => {
             setCurrentRow(record);
@@ -248,7 +305,6 @@ const ConnectorPage: React.FC = () => {
           return tableRequest(() => getEdgeList(searchParams), 'edges');
         }}
         toolBarRender={() => [
-          <RefreshButton key="refresh" onClick={reload} />,
           <CreateButton key="create" onClick={handleOpenCreateModal}>
             新建连接器
           </CreateButton>,
@@ -281,11 +337,29 @@ const ConnectorPage: React.FC = () => {
             {dom}
           </Modal>
         )}
+        submitter={{
+          render: (props, dom) => {
+            // 最后一步时，提交按钮显示"完成"
+            if (props.step === 2) {
+              return dom.map((item: any) => {
+                if (item.key === 'submit') {
+                  return { ...item, props: { ...item.props, children: '完成' } };
+                }
+                return item;
+              });
+            }
+            return dom;
+          },
+        }}
       >
         <StepsForm.StepForm
           name="create"
           title="创建连接器"
           onFinish={async (values) => {
+            // 如果已经创建了连接器，直接进入下一步，避免重复创建
+            if (accessKeys) {
+              return true;
+            }
             try {
               const res = await createEdge({
                 name: values.name,
@@ -367,7 +441,7 @@ const ConnectorPage: React.FC = () => {
                       className="mb-0 text-sm"
                       style={{ marginBottom: 0, wordBreak: 'break-all' }}
                     >
-                      {`curl -sSL http://49.232.250.11:8080/install.sh | bash -s -- --access-key=${accessKeys.access_key} --secret-key=${accessKeys.secret_key}`}
+                      {accessKeys.install_command || `curl -sSL http://49.232.250.11:8080/install.sh | bash -s -- --access-key=${accessKeys.access_key} --secret-key=${accessKeys.secret_key}`}
                     </Paragraph>
                   </div>
                 </div>
@@ -391,12 +465,14 @@ const ConnectorPage: React.FC = () => {
           )}
         </StepsForm.StepForm>
 
-        <StepsForm.StepForm name="done" title="完成">
+        <StepsForm.StepForm
+          name="done"
+          title="完成"
+        >
           <Result
             status="success"
             title="连接器创建成功"
             subTitle="安装完成后，连接器将自动上线。您可以在连接器列表中查看状态。"
-            extra={<Text type="secondary">点击"完成"按钮关闭此窗口</Text>}
           />
         </StepsForm.StepForm>
       </StepsForm>
@@ -422,11 +498,20 @@ const ConnectorPage: React.FC = () => {
           label="描述"
           placeholder="请输入连接器描述"
         />
+        <ProFormSelect
+          name="status"
+          label="运行状态"
+          options={[
+            { label: '运行中', value: 1 },
+            { label: '已停止', value: 2 },
+          ]}
+          placeholder="请选择运行状态"
+        />
       </ModalForm>
 
-      {/* 发现应用抽屉 */}
+      {/* 扫描应用抽屉 */}
       <Drawer
-        title={`发现应用 - ${currentRow?.name}`}
+        title={`扫描应用 - ${currentRow?.name}`}
         width={500}
         open={discoverDrawerVisible}
         onClose={() => setDiscoverDrawerVisible(false)}
@@ -449,13 +534,18 @@ const ConnectorPage: React.FC = () => {
           </div>
         ) : scanTask ? (
           <>
-            <div className="mb-4">
+            <div className="mb-4 flex justify-between items-center">
               <Text type="secondary">
-                扫描状态: {scanTask.task_status}
+                扫描状态: {scanTask.task_status === 'pending' ? '扫描中' : scanTask.task_status === 'running' ? '扫描中' : scanTask.task_status === 'completed' ? '已完成' : scanTask.task_status === 'failed' ? '失败' : scanTask.task_status}
                 {scanTask.error && (
                   <Text type="danger" className="ml-2">{scanTask.error}</Text>
                 )}
               </Text>
+              {(scanTask.task_status === 'completed' || scanTask.task_status === 'failed') && (
+                <Button size="small" onClick={handleRescan} loading={scanning}>
+                  重新扫描
+                </Button>
+              )}
             </div>
             {scanTask.applications && scanTask.applications.length > 0 ? (
               <List
@@ -468,12 +558,12 @@ const ConnectorPage: React.FC = () => {
                       </Button>,
                     ]}
                   >
-                    <List.Item.Meta title={app} description="发现的内网服务" />
+                    <List.Item.Meta title={app} description="扫描到的内网服务" />
                   </List.Item>
                 )}
               />
             ) : (
-              <div className="text-center py-12 text-gray-400">未发现可用应用</div>
+              <div className="text-center py-12 text-gray-400">未扫描到可用应用</div>
             )}
           </>
         ) : (

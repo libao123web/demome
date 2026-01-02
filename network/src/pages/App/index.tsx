@@ -20,7 +20,7 @@ import {
   createProxy,
 } from '@/services/api';
 import { executeAction, tableRequest } from '@/utils/request';
-import { RefreshButton, CreateButton, DeleteLink } from '@/components/TableButtons';
+import { CreateButton, DeleteLink } from '@/components/TableButtons';
 import { defaultPagination, defaultSearch, buildSearchParams } from '@/utils/tableConfig';
 
 const { Text } = Typography;
@@ -193,7 +193,6 @@ const AppPage: React.FC = () => {
           return tableRequest(() => getApplicationList(searchParams), 'applications');
         }}
         toolBarRender={() => [
-          <RefreshButton key="refresh" onClick={reload} />,
           <CreateButton key="create" onClick={() => setCreateModalVisible(true)}>
             新建应用
           </CreateButton>,

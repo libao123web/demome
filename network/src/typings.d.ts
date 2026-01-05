@@ -1,5 +1,5 @@
 /* eslint-disable */
-// API 类型定义 - 基于 Swagger 文档生成
+// API 类型定义 - 基于 Liaison 文档生成
 
 declare namespace API {
   // ========== 通用响应 ==========

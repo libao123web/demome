@@ -1,6 +1,6 @@
 /**
  * API 服务统一入口
- * 基于 Swagger 文档: http://49.232.250.11:8080
+ * 基于 Liaison 文档: http://49.232.250.11:8080
  */
 
 import { request } from '@umijs/max';

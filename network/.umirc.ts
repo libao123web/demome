@@ -10,14 +10,13 @@ export default defineConfig({
   },
   esbuildMinifyIIFE: true,
   layout: {
-    title: 'Swagger',
+    title: 'Liaison',
   },
   tailwindcss: {},
   proxy: {
     '/api': {
       target: 'http://49.232.250.11:8080',
       changeOrigin: true,
-      pathRewrite: { '^/api': '' },
     },
   },
   routes: [

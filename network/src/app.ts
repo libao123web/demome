@@ -104,7 +104,7 @@ export const layout = () => {
     },
     // 水印
     waterMarkProps: {
-      content: 'Swagger',
+      content: 'Liaison',
     },
   };
 };

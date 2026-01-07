@@ -144,14 +144,38 @@ const AppPage: React.FC = () => {
       title: '所属设备',
       dataIndex: ['device', 'name'],
       ellipsis: true,
-      search: false,
+      width: 150,
       render: (_, record) => record.device?.name || '-',
+    },
+    {
+      title: '设备名',
+      dataIndex: 'device_name',
+      key: 'device_name_search',
+      hideInTable: true,
+      tooltip: '支持按所属设备名搜索',
+    },
+    {
+      title: '已关联代理',
+      dataIndex: 'proxy_name',
+      ellipsis: true,
+      width: 150,
+      search: false,
+      render: (_, record) => {
+        if (!record.proxy_name) return '-';
+        return (
+          <Space size="small">
+            <LinkOutlined />
+            <span>{record.proxy_name}</span>
+            {record.proxy_port && <Tag color="blue">{record.proxy_port}</Tag>}
+          </Space>
+        );
+      },
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       valueType: 'dateTime',
-      width: 180,
+      width: 170,
       search: false,
     },
     {
@@ -189,7 +213,7 @@ const AppPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name']);
+          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name', 'device_name']);
           return tableRequest(() => getApplicationList(searchParams), 'applications');
         }}
         toolBarRender={() => [

@@ -49,6 +49,8 @@ declare namespace API {
     port: number;
     edge_id: number;
     device?: Device;
+    proxy_name?: string; // 关联的代理名称
+    proxy_port?: number; // 关联的代理端口
     created_at: string;
     updated_at: string;
   }
@@ -57,6 +59,7 @@ declare namespace API {
     device_id?: number;
     name?: string;
     application_type?: string;
+    device_name?: string; // 设备名搜索
   }
 
   interface ApplicationListResult {
@@ -87,6 +90,13 @@ declare namespace API {
     cpu: number;
     memory: number;
     disk: number;
+    interfaces?: Array<{
+      name: string;
+      mac: string;
+      ip: string[];
+      ipv4?: string[];
+      ipv6?: string[];
+    }>;
     created_at: string;
     updated_at: string;
   }
@@ -98,6 +108,7 @@ declare namespace API {
 
   interface DeviceListParams extends PageParams {
     name?: string;
+    ip?: string; // 网卡IP搜索
   }
 
   interface DeviceUpdateParams {
@@ -112,6 +123,8 @@ declare namespace API {
     description?: string;
     status: number; // 1: running, 2: stopped
     online: number; // 0: offline, 1: online
+    device_id?: number;
+    device_name?: string;
     created_at: string;
     updated_at: string;
   }
@@ -123,6 +136,7 @@ declare namespace API {
 
   interface EdgeListParams extends PageParams {
     name?: string;
+    device_name?: string; // 设备名搜索
   }
 
   interface EdgeCreateParams {
@@ -133,7 +147,7 @@ declare namespace API {
   interface EdgeCreateResult {
     access_key: string;
     secret_key: string;
-    install_command?: string; // 安装命令由后端返回
+    command?: string; // 安装命令由后端返回
   }
 
   interface EdgeUpdateParams {

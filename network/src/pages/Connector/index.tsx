@@ -229,6 +229,21 @@ const ConnectorPage: React.FC = () => {
       dataIndex: 'description',
       ellipsis: true,
       search: false,
+      width: 200,
+    },
+    {
+      title: '所属设备',
+      dataIndex: 'device_name',
+      ellipsis: true,
+      width: 150,
+      render: (_, record) => record.device_name || '-',
+    },
+    {
+      title: '设备名',
+      dataIndex: 'device_name',
+      key: 'device_name_search', // 添加唯一 key 避免冲突
+      hideInTable: true,
+      tooltip: '支持按所属设备名搜索',
     },
     {
       title: '在线状态',
@@ -257,7 +272,7 @@ const ConnectorPage: React.FC = () => {
       title: '创建时间',
       dataIndex: 'created_at',
       valueType: 'dateTime',
-      width: 180,
+      width: 170,
       search: false,
     },
     {
@@ -301,7 +316,7 @@ const ConnectorPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name']);
+          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name', 'device_name']);
           return tableRequest(() => getEdgeList(searchParams), 'edges');
         }}
         toolBarRender={() => [
@@ -441,7 +456,7 @@ const ConnectorPage: React.FC = () => {
                       className="mb-0 text-sm"
                       style={{ marginBottom: 0, wordBreak: 'break-all' }}
                     >
-                      {accessKeys.install_command || `curl -sSL http://49.232.250.11:8080/install.sh | bash -s -- --access-key=${accessKeys.access_key} --secret-key=${accessKeys.secret_key}`}
+                      {accessKeys.command || `curl -sSL http://49.232.250.11:8080/install.sh | bash -s -- --access-key=${accessKeys.access_key} --secret-key=${accessKeys.secret_key}`}
                     </Paragraph>
                   </div>
                 </div>
@@ -562,6 +577,8 @@ const ConnectorPage: React.FC = () => {
                   </List.Item>
                 )}
               />
+            ) : (scanTask.task_status === 'pending' || scanTask.task_status === 'running') ? (
+              <div className="text-center py-12 text-gray-400">扫描中...</div>
             ) : (
               <div className="text-center py-12 text-gray-400">未扫描到可用应用</div>
             )}

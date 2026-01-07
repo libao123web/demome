@@ -106,6 +106,30 @@ const DevicePage: React.FC = () => {
       render: (disk) => formatMBSize(disk as number),
     },
     {
+      title: '网卡',
+      dataIndex: 'interfaces',
+      search: false,
+      ellipsis: true,
+      render: (interfaces: any[]) => {
+        if (!interfaces || interfaces.length === 0) return '-';
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {interfaces.map((iface, index) => (
+              <Tag key={index} style={{ margin: 0 }}>
+                {iface.name}: {iface.ip?.join(', ') || '-'}
+              </Tag>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      title: '网卡IP',
+      dataIndex: 'ip',
+      hideInTable: true,
+      tooltip: '支持搜索设备的任意网卡IP地址',
+    },
+    {
       title: '描述',
       dataIndex: 'description',
       ellipsis: true,
@@ -146,7 +170,7 @@ const DevicePage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.DeviceListParams>(params, ['name']);
+          const searchParams = buildSearchParams<API.DeviceListParams>(params, ['name', 'ip']);
           return tableRequest(() => getDeviceList(searchParams), 'devices');
         }}
         pagination={defaultPagination}
@@ -174,6 +198,23 @@ const DevicePage: React.FC = () => {
               { title: 'CPU', dataIndex: 'cpu', render: (cpu) => `${cpu} 核` },
               { title: '内存', dataIndex: 'memory', render: (memory) => formatMBSize(memory as number) },
               { title: '磁盘', dataIndex: 'disk', render: (disk) => formatMBSize(disk as number) },
+              { 
+                title: '网卡信息', 
+                dataIndex: 'interfaces',
+                render: (interfaces: any[]) => {
+                  if (!interfaces || interfaces.length === 0) return '-';
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {interfaces.map((iface, index) => (
+                        <div key={index}>
+                          <Tag>{iface.name}</Tag> {iface.ip?.join(', ') || '-'}
+                          {iface.mac && <div style={{ fontSize: '12px', color: '#999' }}>MAC: {iface.mac}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              },
               { title: '描述', dataIndex: 'description' },
               { title: '创建时间', dataIndex: 'created_at', valueType: 'dateTime' },
               { title: '更新时间', dataIndex: 'updated_at', valueType: 'dateTime' },

@@ -5,6 +5,15 @@ import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import React from 'react';
 import { getCurrentUser, logout } from '@/services/api';
 
+// 过滤掉 findDOMNode 警告（Ant Design 已知问题）
+if (process.env.NODE_ENV === 'development') {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (args[0]?.includes?.('findDOMNode is deprecated')) return;
+    originalWarn.apply(console, args);
+  };
+}
+
 // 全局初始化数据配置，用于 Layout 用户信息和权限初始化
 export async function getInitialState(): Promise<{
   currentUser?: API.CurrentUser;
@@ -77,7 +86,7 @@ const dropdownMenuItems = [
 // 布局配置
 export const layout = () => {
   return {
-    logo: 'https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg',
+    logo: false, // 不显示 logo 图标
     menu: {
       locale: false,
     },
@@ -89,6 +98,15 @@ export const layout = () => {
     contentWidth: 'Fluid',
     colorPrimary: '#1890ff',
     siderWidth: 208,
+    // 自定义标题样式
+    title: 'Liaison',
+    titleRender: (logo: any, title: any) => {
+      return React.createElement(
+        'div',
+        { style: { display: 'flex', alignItems: 'center', color: '#1890ff', fontWeight: 600, fontSize: '18px' } },
+        'Liaison'
+      );
+    },
     // 右上角头像下拉菜单
     avatarProps: {
       src: 'https://gw.alipayobjects.com/zos/antfincdn/efFD%24IOql2/weixintupian_20170331104822.jpg',
@@ -128,6 +146,14 @@ export const request: RequestConfig = {
   // 响应拦截器
   responseInterceptors: [
     (response: any) => {
+      // 检查业务状态码
+      const { data } = response;
+      if (data && data.code === 401) {
+        localStorage.removeItem('token');
+        history.push('/login');
+        // 不显示错误消息，直接跳转
+        return response;
+      }
       return response;
     },
   ],

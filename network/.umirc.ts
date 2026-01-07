@@ -1,7 +1,9 @@
 import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
-  antd: {},
+  antd: {
+    appConfig: {}, // 启用 App 组件以支持动态主题
+  },
   access: {},
   model: {},
   initialState: {},

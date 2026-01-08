@@ -3,7 +3,6 @@
  * 自动处理 code === 200 的判断逻辑
  */
 
-import { request as umiRequest } from '@umijs/max';
 import { message } from 'antd';
 
 /** 成功响应码 */
@@ -25,7 +24,9 @@ export async function executeAction<T = any>(
   try {
     const res = await action();
     if (res.code === SUCCESS_CODE) {
-      message.success(successMessage);
+      if (successMessage) {
+        message.success(successMessage);
+      }
       onSuccess?.(res.data);
       return true;
     }

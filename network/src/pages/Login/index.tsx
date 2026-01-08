@@ -1,12 +1,13 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { LoginForm, ProFormText } from '@ant-design/pro-components';
 import { history, useModel } from '@umijs/max';
-import { message } from 'antd';
+import { App } from 'antd';
 import { login } from '@/services/api';
 import { APP_NAME } from '@/constants';
 import './index.less';
 
 const Login: React.FC = () => {
+  const { message } = App.useApp();
   const { setInitialState } = useModel('@@initialState');
 
   const handleSubmit = async (values: { email: string; password: string }) => {
@@ -61,7 +62,7 @@ const Login: React.FC = () => {
               prefix: <UserOutlined className="prefixIcon" />,
             }}
             placeholder="邮箱"
-            initialValue="default@liaison.local"
+            initialValue=""
             rules={[
               {
                 required: true,
@@ -80,7 +81,7 @@ const Login: React.FC = () => {
               prefix: <LockOutlined className="prefixIcon" />,
             }}
             placeholder="密码"
-            initialValue="7ZROz5f6N6UxvkNr"
+            initialValue=""
             rules={[
               {
                 required: true,

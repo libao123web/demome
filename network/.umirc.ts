@@ -2,7 +2,11 @@ import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
   antd: {
-    appConfig: {}, // 启用 App 组件以支持动态主题
+    appConfig: {
+      message: {
+        maxCount: 3,
+      },
+    }, // 启用 App 组件以支持动态主题
   },
   access: {},
   model: {},

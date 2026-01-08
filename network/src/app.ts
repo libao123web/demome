@@ -1,16 +1,36 @@
 // 运行时配置
 import { history, RequestConfig } from '@umijs/max';
-import { message, Dropdown } from 'antd';
+import { Dropdown, message } from 'antd';
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import React from 'react';
 import { getCurrentUser, logout } from '@/services/api';
 
-// 过滤掉 findDOMNode 警告（Ant Design 已知问题）
+// 过滤掉开发环境的已知警告
 if (process.env.NODE_ENV === 'development') {
+  const filterMessages = [
+    'findDOMNode is deprecated',
+    'Static function can not consume context',
+  ];
+  
+  const shouldFilter = (args: any[]) => {
+    const msg = args[0];
+    if (typeof msg === 'string') {
+      return filterMessages.some(filter => msg.includes(filter));
+    }
+    return false;
+  };
+
   const originalWarn = console.warn;
+  const originalError = console.error;
+  
   console.warn = (...args) => {
-    if (args[0]?.includes?.('findDOMNode is deprecated')) return;
+    if (shouldFilter(args)) return;
     originalWarn.apply(console, args);
+  };
+  
+  console.error = (...args) => {
+    if (shouldFilter(args)) return;
+    originalError.apply(console, args);
   };
 }
 
@@ -64,27 +84,27 @@ const handleLogout = async () => {
   history.push('/login');
 };
 
-// 下拉菜单配置
-const dropdownMenuItems = [
-  {
-    key: 'settings',
-    icon: React.createElement(SettingOutlined),
-    label: '个人设置',
-    onClick: () => history.push('/settings'),
-  },
-  {
-    type: 'divider' as const,
-  },
-  {
-    key: 'logout',
-    icon: React.createElement(LogoutOutlined),
-    label: '退出登录',
-    onClick: handleLogout,
-  },
-];
-
 // 布局配置
 export const layout = () => {
+  // 下拉菜单配置
+  const dropdownMenuItems = [
+    {
+      key: 'settings',
+      icon: React.createElement(SettingOutlined),
+      label: '个人设置',
+      onClick: () => history.push('/settings'),
+    },
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'logout',
+      icon: React.createElement(LogoutOutlined),
+      label: '退出登录',
+      onClick: handleLogout,
+    },
+  ];
+
   return {
     logo: false, // 不显示 logo 图标
     menu: {
@@ -100,7 +120,7 @@ export const layout = () => {
     siderWidth: 208,
     // 自定义标题样式
     title: 'Liaison',
-    titleRender: (logo: any, title: any) => {
+    titleRender: () => {
       return React.createElement(
         'div',
         { style: { display: 'flex', alignItems: 'center', color: '#1890ff', fontWeight: 600, fontSize: '18px' } },

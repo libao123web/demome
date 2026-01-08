@@ -14,7 +14,7 @@ import {
   Button,
   Drawer,
   List,
-  message,
+  App,
   Modal,
   Space,
   Tag,
@@ -49,6 +49,7 @@ import { copyToClipboard } from '@/utils/format';
 const { Text, Paragraph } = Typography;
 
 const ConnectorPage: React.FC = () => {
+  const { message } = App.useApp();
   const actionRef = useRef<ActionType>();
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -133,7 +134,7 @@ const ConnectorPage: React.FC = () => {
         setScanning(false);
         return;
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise<void>(resolve => { setTimeout(resolve, 1000); });
       const res = await getEdgeScanTask(edge.id);
       if (res.code === 200 && res.data) {
         setScanTask(res.data);
@@ -161,7 +162,7 @@ const ConnectorPage: React.FC = () => {
         setScanning(false);
         return;
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise<void>(resolve => { setTimeout(resolve, 1000); });
       const res = await getEdgeScanTask(currentRow.id);
       if (res.code === 200 && res.data) {
         setScanTask(res.data);
@@ -230,20 +231,6 @@ const ConnectorPage: React.FC = () => {
       ellipsis: true,
       search: false,
       width: 200,
-    },
-    {
-      title: '所属设备',
-      dataIndex: 'device_name',
-      ellipsis: true,
-      width: 150,
-      render: (_, record) => record.device_name || '-',
-    },
-    {
-      title: '设备名',
-      dataIndex: 'device_name',
-      key: 'device_name_search', // 添加唯一 key 避免冲突
-      hideInTable: true,
-      tooltip: '支持按所属设备名搜索',
     },
     {
       title: '在线状态',
@@ -316,7 +303,7 @@ const ConnectorPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name', 'device_name']);
+          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name']);
           return tableRequest(() => getEdgeList(searchParams), 'edges');
         }}
         toolBarRender={() => [

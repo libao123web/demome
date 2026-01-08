@@ -8,7 +8,7 @@ import {
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components';
-import { Space, Tag, Typography } from 'antd';
+import { Space, Tag, Typography, Input } from 'antd';
 import { LinkOutlined, ApiOutlined, EditOutlined } from '@ant-design/icons';
 import { useRef, useState } from 'react';
 import {
@@ -142,33 +142,12 @@ const AppPage: React.FC = () => {
     },
     {
       title: '所属设备',
-      dataIndex: ['device', 'name'],
+      dataIndex: 'device',
       ellipsis: true,
       width: 150,
       render: (_, record) => record.device?.name || '-',
-    },
-    {
-      title: '设备名',
-      dataIndex: 'device_name',
-      key: 'device_name_search',
-      hideInTable: true,
-      tooltip: '支持按所属设备名搜索',
-    },
-    {
-      title: '已关联代理',
-      dataIndex: 'proxy_name',
-      ellipsis: true,
-      width: 150,
-      search: false,
-      render: (_, record) => {
-        if (!record.proxy_name) return '-';
-        return (
-          <Space size="small">
-            <LinkOutlined />
-            <span>{record.proxy_name}</span>
-            {record.proxy_port && <Tag color="blue">{record.proxy_port}</Tag>}
-          </Space>
-        );
+      renderFormItem: () => {
+        return <Input placeholder="请输入设备名称" />;
       },
     },
     {
@@ -213,7 +192,7 @@ const AppPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name', 'device_name']);
+          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name', 'device']);
           return tableRequest(() => getApplicationList(searchParams), 'applications');
         }}
         toolBarRender={() => [
@@ -278,7 +257,7 @@ const AppPage: React.FC = () => {
             try {
               const res = await getEdgeList({ page_size: 100 });
               return (
-                res.data?.edges?.map((item) => ({
+                res.data?.edges?.map((item: API.Edge) => ({
                   label: item.name,
                   value: item.id,
                 })) || []

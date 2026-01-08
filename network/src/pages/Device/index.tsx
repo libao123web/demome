@@ -68,7 +68,7 @@ const DevicePage: React.FC = () => {
       render: (_, record) => (
         <Space>
           <DesktopOutlined />
-          <span>{record.name}</span>
+          <span>{record.name || `设备-${record.id}`}</span>
         </Space>
       ),
     },
@@ -110,15 +110,20 @@ const DevicePage: React.FC = () => {
       dataIndex: 'interfaces',
       search: false,
       ellipsis: true,
-      render: (interfaces: any[]) => {
+      render: (_, record) => {
+        const interfaces = record.interfaces;
         if (!interfaces || !Array.isArray(interfaces) || interfaces.length === 0) return '-';
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {interfaces.map((iface, index) => (
-              <Tag key={index} style={{ margin: 0 }}>
-                {iface.name}: {iface.ip?.join(', ') || '-'}
-              </Tag>
-            ))}
+            {interfaces.map((iface, index) => {
+              // 过滤出 IPv4 地址
+              const ipv4 = iface.ip?.filter((ip: string) => !ip.includes(':')) || [];
+              return (
+                <Tag key={index} style={{ margin: 0 }}>
+                  {iface.name}: {ipv4.length > 0 ? ipv4.join(', ') : '-'}
+                </Tag>
+              );
+            })}
           </div>
         );
       },
@@ -201,16 +206,21 @@ const DevicePage: React.FC = () => {
               { 
                 title: '网卡信息', 
                 dataIndex: 'interfaces',
-                render: (interfaces: any[]) => {
+                render: (_, record) => {
+                  const interfaces = record.interfaces;
                   if (!interfaces || !Array.isArray(interfaces) || interfaces.length === 0) return '-';
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {interfaces.map((iface, index) => (
-                        <div key={index}>
-                          <Tag>{iface.name}</Tag> {iface.ip?.join(', ') || '-'}
-                          {iface.mac && <div style={{ fontSize: '12px', color: '#999' }}>MAC: {iface.mac}</div>}
-                        </div>
-                      ))}
+                      {interfaces.map((iface, index) => {
+                        // 过滤出 IPv4 地址
+                        const ipv4 = iface.ip?.filter((ip: string) => !ip.includes(':')) || [];
+                        return (
+                          <div key={index}>
+                            <Tag>{iface.name}</Tag> {ipv4.length > 0 ? ipv4.join(', ') : '-'}
+                            {iface.mac && <div style={{ fontSize: '12px', color: '#999' }}>MAC: {iface.mac}</div>}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 }

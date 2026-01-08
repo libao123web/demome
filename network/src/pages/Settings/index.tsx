@@ -5,17 +5,15 @@ import {
   Form,
   Input,
   Button,
-  message,
+  App,
   Descriptions,
   Avatar,
   Typography,
-  Space,
   Divider,
 } from 'antd';
 import {
   UserOutlined,
   LockOutlined,
-  MailOutlined,
   SafetyOutlined,
 } from '@ant-design/icons';
 import { useState } from 'react';
@@ -27,6 +25,7 @@ import './index.less';
 const { Title, Text } = Typography;
 
 const SettingsPage: React.FC = () => {
+  const { message } = App.useApp();
   const { initialState } = useModel('@@initialState');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordForm] = Form.useForm();

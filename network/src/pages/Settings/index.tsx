@@ -68,7 +68,7 @@ const SettingsPage: React.FC = () => {
       ),
       children: (
         <div className="settings-section">
-          <Card bordered={false}>
+          <Card variant="borderless">
             <div className="user-profile">
               <Avatar
                 size={80}
@@ -89,7 +89,7 @@ const SettingsPage: React.FC = () => {
             
             <Descriptions
               column={{ xs: 1, sm: 1, md: 2 }}
-              labelStyle={{ fontWeight: 500 }}
+              styles={{ label: { fontWeight: 500 } }}
             >
               <Descriptions.Item label="用户名">
                 {initialState?.currentUser?.name || 'Admin'}
@@ -124,7 +124,7 @@ const SettingsPage: React.FC = () => {
       ),
       children: (
         <div className="settings-section">
-          <Card bordered={false}>
+          <Card variant="borderless">
             <div className="password-tips">
               <SafetyOutlined className="text-blue-500 text-xl mr-2" />
               <div>
@@ -218,7 +218,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <Card bordered={false}>
+      <Card variant="borderless">
         <Tabs
           items={items}
           tabPosition="left"

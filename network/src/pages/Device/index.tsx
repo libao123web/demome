@@ -111,7 +111,7 @@ const DevicePage: React.FC = () => {
       search: false,
       ellipsis: true,
       render: (interfaces: any[]) => {
-        if (!interfaces || interfaces.length === 0) return '-';
+        if (!interfaces || !Array.isArray(interfaces) || interfaces.length === 0) return '-';
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {interfaces.map((iface, index) => (
@@ -202,7 +202,7 @@ const DevicePage: React.FC = () => {
                 title: '网卡信息', 
                 dataIndex: 'interfaces',
                 render: (interfaces: any[]) => {
-                  if (!interfaces || interfaces.length === 0) return '-';
+                  if (!interfaces || !Array.isArray(interfaces) || interfaces.length === 0) return '-';
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {interfaces.map((iface, index) => (

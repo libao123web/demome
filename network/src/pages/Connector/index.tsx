@@ -226,6 +226,13 @@ const ConnectorPage: React.FC = () => {
       width: 150,
     },
     {
+      title: '所属设备',
+      dataIndex: 'device_name',
+      ellipsis: true,
+      width: 150,
+      render: (_, record) => record.device?.name || '-',
+    },
+    {
       title: '描述',
       dataIndex: 'description',
       ellipsis: true,
@@ -303,7 +310,7 @@ const ConnectorPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name']);
+          const searchParams = buildSearchParams<API.EdgeListParams>(params, ['name', 'device_name']);
           return tableRequest(() => getEdgeList(searchParams), 'edges');
         }}
         toolBarRender={() => [

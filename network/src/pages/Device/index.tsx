@@ -116,14 +116,17 @@ const DevicePage: React.FC = () => {
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {interfaces.map((iface, index) => {
+              if (!iface || !iface.name) return null;
               // 过滤出 IPv4 地址
-              const ipv4 = iface.ip?.filter((ip: string) => !ip.includes(':')) || [];
+              const ipv4 = Array.isArray(iface.ip)
+                ? iface.ip.filter((ip: string) => ip && !ip.includes(':'))
+                : [];
               return (
                 <Tag key={index} style={{ margin: 0 }}>
                   {iface.name}: {ipv4.length > 0 ? ipv4.join(', ') : '-'}
                 </Tag>
               );
-            })}
+            }).filter(Boolean)}
           </div>
         );
       },
@@ -212,15 +215,18 @@ const DevicePage: React.FC = () => {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {interfaces.map((iface, index) => {
+                        if (!iface || !iface.name) return null;
                         // 过滤出 IPv4 地址
-                        const ipv4 = iface.ip?.filter((ip: string) => !ip.includes(':')) || [];
+                        const ipv4 = Array.isArray(iface.ip) 
+                          ? iface.ip.filter((ip: string) => ip && !ip.includes(':')) 
+                          : [];
                         return (
                           <div key={index}>
                             <Tag>{iface.name}</Tag> {ipv4.length > 0 ? ipv4.join(', ') : '-'}
                             {iface.mac && <div style={{ fontSize: '12px', color: '#999' }}>MAC: {iface.mac}</div>}
                           </div>
                         );
-                      })}
+                      }).filter(Boolean)}
                     </div>
                   );
                 }

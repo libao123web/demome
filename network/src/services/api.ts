@@ -22,13 +22,13 @@ export async function getCurrentUser() {
   });
 }
 
-/** 修改密码 PUT /v1/iam/user/password */
+/** 修改密码 POST /v1/iam/password */
 export async function changePassword(data: {
   old_password: string;
   new_password: string;
 }) {
-  return request<API.Response>('/api/v1/iam/user/password', {
-    method: 'PUT',
+  return request<API.Response>('/api/v1/iam/password', {
+    method: 'POST',
     data,
   });
 }

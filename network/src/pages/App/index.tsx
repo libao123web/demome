@@ -118,12 +118,12 @@ const AppPage: React.FC = () => {
       width: 100,
       search: false,
       valueEnum: {
-        web: { text: 'Web', status: 'Processing' },
-        tcp: { text: 'TCP', status: 'Success' },
-        udp: { text: 'UDP', status: 'Warning' },
-        ssh: { text: 'SSH', status: 'Default' },
-        rdp: { text: 'RDP', status: 'Error' },
-        database: { text: '数据库', status: 'Error' },
+        web: { text: 'Web' },
+        tcp: { text: 'TCP' },
+        udp: { text: 'UDP' },
+        ssh: { text: 'SSH' },
+        rdp: { text: 'RDP' },
+        database: { text: '数据库' },
       },
     },
     {
@@ -142,12 +142,29 @@ const AppPage: React.FC = () => {
     },
     {
       title: '所属设备',
-      dataIndex: 'device',
+      dataIndex: 'device_name',
       ellipsis: true,
       width: 150,
       render: (_, record) => record.device?.name || '-',
       renderFormItem: () => {
         return <Input placeholder="请输入设备名称" />;
+      },
+    },
+    {
+      title: '已关联代理',
+      dataIndex: 'proxy',
+      ellipsis: true,
+      width: 150,
+      search: false,
+      render: (_, record) => {
+        if (record.proxy) {
+          return (
+            <Tag color="blue">
+              <LinkOutlined /> {record.proxy.name}:{record.proxy.port}
+            </Tag>
+          );
+        }
+        return <Tag>未关联</Tag>;
       },
     },
     {
@@ -192,7 +209,7 @@ const AppPage: React.FC = () => {
         rowKey="id"
         columns={columns}
         request={async (params) => {
-          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name', 'device']);
+          const searchParams = buildSearchParams<API.ApplicationListParams>(params, ['name', 'device_name']);
           return tableRequest(() => getApplicationList(searchParams), 'applications');
         }}
         toolBarRender={() => [

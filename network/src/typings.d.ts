@@ -38,6 +38,7 @@ declare namespace API {
     role?: string;
     created_at?: string;
     last_login_at?: string;
+    last_login_ip?: string;
   }
 
   // ========== 应用 (Application) ==========
@@ -49,6 +50,7 @@ declare namespace API {
     port: number;
     edge_id: number;
     device?: Device;
+    proxy?: Proxy; // 已关联代理
     created_at: string;
     updated_at: string;
   }
@@ -57,7 +59,7 @@ declare namespace API {
     device_id?: number;
     name?: string;
     application_type?: string;
-    device?: string; // 设备名搜索
+    device_name?: string; // 设备名搜索
   }
 
   interface ApplicationListResult {
@@ -121,6 +123,7 @@ declare namespace API {
     description?: string;
     status: number; // 1: running, 2: stopped
     online: number; // 0: offline, 1: online
+    device?: Device; // 所属设备
     created_at: string;
     updated_at: string;
   }
@@ -132,6 +135,7 @@ declare namespace API {
 
   interface EdgeListParams extends PageParams {
     name?: string;
+    device_name?: string; // 设备名搜索
   }
 
   interface EdgeCreateParams {

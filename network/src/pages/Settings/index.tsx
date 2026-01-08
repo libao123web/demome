@@ -106,7 +106,7 @@ const SettingsPage: React.FC = () => {
                 {initialState?.currentUser?.last_login_at || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="登录IP">
-                {'-'}
+                {initialState?.currentUser?.last_login_ip || '-'}
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -152,7 +152,6 @@ const SettingsPage: React.FC = () => {
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="请输入当前密码"
-                  size="large"
                 />
               </Form.Item>
 
@@ -171,7 +170,6 @@ const SettingsPage: React.FC = () => {
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="请输入新密码"
-                  size="large"
                 />
               </Form.Item>
 
@@ -194,7 +192,6 @@ const SettingsPage: React.FC = () => {
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="请再次输入新密码"
-                  size="large"
                 />
               </Form.Item>
 
@@ -203,7 +200,6 @@ const SettingsPage: React.FC = () => {
                   type="primary"
                   htmlType="submit"
                   loading={passwordLoading}
-                  size="large"
                 >
                   修改密码
                 </Button>

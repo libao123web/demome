@@ -44,7 +44,7 @@ const Login: React.FC = () => {
         <div className="login-desc">安全、可靠的网络服务</div>
         
         <LoginForm
-          contentStyle={{
+          style={{
             minWidth: 280,
             maxWidth: '75vw',
           }}

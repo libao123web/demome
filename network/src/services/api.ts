@@ -5,8 +5,6 @@
 
 import { request } from '@umijs/max';
 
-// ==================== 认证相关 ====================
-
 /** 登录 POST /v1/iam/login */
 export async function login(data: API.LoginParams) {
   return request<API.LoginResult>('/api/v1/iam/login', {
@@ -40,8 +38,6 @@ export async function logout() {
     data: {},
   });
 }
-
-// ==================== 应用管理 (Applications) ====================
 
 /** 获取应用列表 GET /v1/applications */
 export async function getApplicationList(params?: API.ApplicationListParams) {
@@ -77,8 +73,6 @@ export async function deleteApplication(id: number) {
   });
 }
 
-// ==================== 设备管理 (Devices) ====================
-
 /** 获取设备列表 GET /v1/devices */
 export async function getDeviceList(params?: API.DeviceListParams) {
   return request<API.Response<API.DeviceListResult>>('/api/v1/devices', {
@@ -101,8 +95,6 @@ export async function updateDevice(id: number, data: API.DeviceUpdateParams) {
     data,
   });
 }
-
-// ==================== 连接器/边缘节点 (Edges) ====================
 
 /** 获取连接器列表 GET /v1/edges */
 export async function getEdgeList(params?: API.EdgeListParams) {
@@ -170,8 +162,6 @@ export async function createEdgeScanTask(data: API.EdgeScanTaskCreateParams) {
     },
   );
 }
-
-// ==================== 代理管理 (Proxies) ====================
 
 /** 获取代理列表 GET /v1/proxies */
 export async function getProxyList(params?: API.ProxyListParams) {

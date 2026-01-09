@@ -323,7 +323,6 @@ const ConnectorPage: React.FC = () => {
         scroll={{ x: 'max-content' }}
       />
 
-      {/* 创建连接器 - 步骤表单 */}
       <StepsForm
         onFinish={async () => {
           setCreateModalVisible(false);
@@ -486,7 +485,6 @@ const ConnectorPage: React.FC = () => {
         </StepsForm.StepForm>
       </StepsForm>
 
-      {/* 编辑连接器弹窗 */}
       <ModalForm
         title="编辑连接器"
         open={editModalVisible}
@@ -518,7 +516,6 @@ const ConnectorPage: React.FC = () => {
         />
       </ModalForm>
 
-      {/* 扫描应用抽屉 */}
       <Drawer
         title={`扫描应用 - ${currentRow?.name}`}
         width={500}

@@ -1,8 +1,3 @@
-/**
- * 通用表格页面 Hook
- * 封装 CRUD 页面的常用状态和操作
- */
-
 import { ActionType } from '@ant-design/pro-components';
 import { useRef, useState, useCallback } from 'react';
 import { executeAction } from '@/utils/request';

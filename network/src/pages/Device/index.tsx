@@ -186,7 +186,6 @@ const DevicePage: React.FC = () => {
         scroll={{ x: 'max-content' }}
       />
 
-      {/* 设备详情抽屉 */}
       <Drawer
         title="设备详情"
         width={600}
@@ -239,7 +238,6 @@ const DevicePage: React.FC = () => {
         )}
       </Drawer>
 
-      {/* 编辑设备弹窗 */}
       <ModalForm
         title="编辑设备"
         open={editModalVisible}

@@ -174,7 +174,6 @@ const ProxyPage: React.FC = () => {
         scroll={{ x: 'max-content' }}
       />
 
-      {/* 新建代理弹窗 */}
       <ModalForm
         title="新建代理"
         open={createModalVisible}
@@ -223,7 +222,6 @@ const ProxyPage: React.FC = () => {
         />
       </ModalForm>
 
-      {/* 编辑代理弹窗 */}
       <ModalForm
         title="编辑代理"
         open={editModalVisible}

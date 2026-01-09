@@ -1,10 +1,6 @@
-/**
- * 通用表格工具栏按钮组件
- */
-
 import React from 'react';
 import { Button, Popconfirm } from 'antd';
-import { PlusOutlined, ReloadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined, EditOutlined } from '@ant-design/icons';
 
 interface RefreshButtonProps {
   onClick: () => void;

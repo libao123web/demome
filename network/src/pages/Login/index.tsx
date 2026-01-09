@@ -14,17 +14,14 @@ const Login: React.FC = () => {
     try {
       const result = await login(values);
       if (result.code === 200 && result.data?.token) {
-        // 保存 token
         localStorage.setItem('token', result.data.token);
         message.success('登录成功！');
 
-        // 更新初始状态
         setInitialState((s) => ({
           ...s,
           currentUser: result.data?.user,
         }));
 
-        // 跳转到首页
         const urlParams = new URL(window.location.href).searchParams;
         history.push(urlParams.get('redirect') || '/');
         return;
@@ -92,7 +89,7 @@ const Login: React.FC = () => {
         </LoginForm>
         
         <div className="login-footer">
-          <p>© 2024 {APP_NAME}. All rights reserved.</p>
+          <p>© 2026 {APP_NAME}. All rights reserved.</p>
         </div>
       </div>
     </div>

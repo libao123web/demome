@@ -44,17 +44,14 @@ export async function copyToClipboard(text: string, successMessage = '已复制�
   const { message } = await import('antd');
   
   try {
-    // 优先使用 navigator.clipboard API (需要 HTTPS 或 localhost)
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text);
       message.success(successMessage);
       return true;
     }
     
-    // 降级方案：使用 document.execCommand
     const textArea = document.createElement('textarea');
     textArea.value = text;
-    // 避免滚动到文本区域
     textArea.style.position = 'fixed';
     textArea.style.left = '-9999px';
     textArea.style.top = '-9999px';

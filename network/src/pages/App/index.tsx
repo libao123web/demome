@@ -222,7 +222,6 @@ const AppPage: React.FC = () => {
         scroll={{ x: 'max-content' }}
       />
 
-      {/* 新建应用弹窗 */}
       <ModalForm
         title="新建应用"
         open={createModalVisible}
@@ -286,7 +285,6 @@ const AppPage: React.FC = () => {
         />
       </ModalForm>
 
-      {/* 编辑应用弹窗 */}
       <ModalForm
         title="编辑应用"
         open={editModalVisible}
@@ -304,7 +302,6 @@ const AppPage: React.FC = () => {
         />
       </ModalForm>
 
-      {/* 创建代理弹窗 */}
       <ModalForm
         title="为应用创建代理"
         open={proxyModalVisible}

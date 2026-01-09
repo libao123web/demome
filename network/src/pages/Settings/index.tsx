@@ -103,10 +103,10 @@ const SettingsPage: React.FC = () => {
                 {initialState?.currentUser?.created_at || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="最后登录">
-                {initialState?.currentUser?.last_login_at || '-'}
+                {initialState?.currentUser?.last_login || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="登录IP">
-                {initialState?.currentUser?.last_login_ip || '-'}
+                {initialState?.currentUser?.login_ip || '-'}
               </Descriptions.Item>
             </Descriptions>
           </Card>

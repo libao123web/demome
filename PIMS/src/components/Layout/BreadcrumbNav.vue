@@ -58,16 +58,30 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
 <style scoped lang="less">
 .breadcrumb-nav {
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 8px;
+  padding: 16px 0 0;
+  margin-bottom: 16px;
   
-  .breadcrumb-label {
+  :deep(.ant-breadcrumb-link) {
+    color: rgba(0, 0, 0, 0.65);
+    transition: color 0.3s;
+    
+    &:hover {
+      color: #1890ff;
+    }
+  }
+  
+  :deep(.ant-breadcrumb-separator) {
     color: rgba(0, 0, 0, 0.45);
   }
   
+  .breadcrumb-label {
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+  }
+  
   @media (max-width: 768px) {
-    padding: 10px 12px;
+    padding: 12px 0 0;
+    margin-bottom: 12px;
     font-size: 13px;
   }
 }

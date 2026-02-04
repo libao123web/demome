@@ -148,15 +148,21 @@ const handleMenuClick = ({ key }: { key: string }) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: #fff;
 }
 
 .logo-container {
   height: 64px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.025);
+  }
   
   .logo-img {
     width: 32px;
@@ -166,9 +172,9 @@ const handleMenuClick = ({ key }: { key: string }) => {
   
   .logo-text {
     margin-left: 12px;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
-    color: #1890ff;
+    color: rgba(0, 0, 0, 0.85);
     white-space: nowrap;
   }
 }
@@ -178,15 +184,54 @@ const handleMenuClick = ({ key }: { key: string }) => {
   border-right: none;
   overflow-y: auto;
   overflow-x: hidden;
+  background: #fff;
+  padding: 16px 0;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.25);
+    }
+  }
 }
 
 :deep(.ant-menu-item) {
-  margin: 4px 8px;
-  border-radius: 6px;
+  height: 40px;
+  line-height: 40px;
+  margin: 4px 0;
+  
+  &.ant-menu-item-selected {
+    background-color: #e6f7ff;
+    
+    &::after {
+      border-right: 3px solid #1890ff;
+    }
+  }
+  
+  .anticon {
+    font-size: 14px;
+  }
 }
 
-:deep(.ant-menu-submenu-title) {
-  margin: 4px 8px;
-  border-radius: 6px;
+:deep(.ant-menu-submenu) {
+  .ant-menu-submenu-title {
+    height: 40px;
+    line-height: 40px;
+    margin: 4px 0;
+    
+    .anticon {
+      font-size: 14px;
+    }
+  }
+  
+  .ant-menu-sub {
+    background: #fafafa;
+  }
 }
 </style>

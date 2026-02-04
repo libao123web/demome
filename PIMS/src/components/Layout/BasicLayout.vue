@@ -19,8 +19,8 @@
       v-model:collapsed="appStore.collapsed"
       :trigger="null"
       collapsible
-      :width="220"
-      :collapsedWidth="60"
+      :width="256"
+      :collapsedWidth="80"
       theme="light"
       class="sider-container"
     >
@@ -29,12 +29,12 @@
 
     <a-layout>
       <!-- 顶部导航 -->
-      <a-layout-header class="header-container">
+      <a-layout-header :class="['header-container', { collapsed: appStore.collapsed }]">
         <HeaderBar />
       </a-layout-header>
 
       <!-- 内容区域 -->
-      <a-layout-content class="content-container">
+      <a-layout-content :class="['content-container', { collapsed: appStore.collapsed }]">
         <!-- 面包屑 -->
         <BreadcrumbNav />
         
@@ -81,8 +81,9 @@ onUnmounted(() => {
   left: 0;
   top: 0;
   bottom: 0;
-  z-index: 100;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 99;
+  background: #fff;
+  box-shadow: 2px 0 6px rgba(0, 21, 41, 0.035);
   
   :deep(.ant-layout-sider-children) {
     display: flex;
@@ -93,52 +94,59 @@ onUnmounted(() => {
 .header-container {
   position: sticky;
   top: 0;
-  z-index: 99;
-  padding: 0 24px;
+  z-index: 98;
+  padding: 0;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  margin-left: 220px;
-  transition: margin-left 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  margin-left: 256px;
+  height: 64px;
+  line-height: 64px;
+  
+  &.collapsed {
+    margin-left: 80px;
+  }
   
   @media (max-width: 768px) {
     margin-left: 0;
-    padding: 0 16px;
   }
 }
 
 .content-container {
-  margin-left: 220px;
-  padding: 24px;
-  background: #f0f2f5;
+  margin-left: 256px;
   min-height: calc(100vh - 64px);
-  transition: margin-left 0.2s;
+  background: #f0f2f5;
+  transition: all 0.2s;
+  
+  &.collapsed {
+    margin-left: 80px;
+  }
   
   @media (max-width: 768px) {
     margin-left: 0;
-    padding: 16px;
-  }
-}
-
-// 侧边栏折叠时的样式
-:global(.ant-layout-sider-collapsed) ~ .ant-layout {
-  .header-container,
-  .content-container {
-    margin-left: 60px;
   }
 }
 
 .page-wrapper {
-  margin-top: 16px;
+  padding: 24px 24px 0;
+  
+  @media (max-width: 768px) {
+    padding: 12px 12px 0;
+  }
 }
 
 // 页面切换动画
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
-.fade-enter-from,
+.fade-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
 .fade-leave-to {
   opacity: 0;
+  transform: translateX(-20px);
 }
 </style>

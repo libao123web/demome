@@ -129,12 +129,17 @@ const handleUserMenuClick = ({ key }: { key: string }) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 24px;
+  
+  @media (max-width: 768px) {
+    padding: 0 12px;
+  }
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .trigger {
@@ -143,20 +148,26 @@ const handleUserMenuClick = ({ key }: { key: string }) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: 4px;
+  transition: all 0.3s;
+  color: rgba(0, 0, 0, 0.65);
   
   &:hover {
-    background: #f5f5f5;
+    background: rgba(0, 0, 0, 0.025);
+    color: rgba(0, 0, 0, 0.85);
+  }
+  
+  &:active {
+    background: rgba(0, 0, 0, 0.05);
   }
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .header-action {
@@ -165,13 +176,15 @@ const handleUserMenuClick = ({ key }: { key: string }) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: 4px;
+  transition: all 0.3s;
+  color: rgba(0, 0, 0, 0.65);
   
   &:hover {
-    background: #f5f5f5;
+    background: rgba(0, 0, 0, 0.025);
+    color: rgba(0, 0, 0, 0.85);
   }
 }
 
@@ -180,19 +193,22 @@ const handleUserMenuClick = ({ key }: { key: string }) => {
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
+  height: 40px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: 4px;
+  transition: all 0.3s;
   
   &:hover {
-    background: #f5f5f5;
+    background: rgba(0, 0, 0, 0.025);
   }
   
   .user-name {
-    max-width: 100px;
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.85);
   }
 }
 

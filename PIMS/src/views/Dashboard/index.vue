@@ -288,61 +288,127 @@ onMounted(() => {
 <style scoped lang="less">
 .dashboard {
   .stat-card {
+    border-radius: 2px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    transition: all 0.3s;
+    
+    &:hover {
+      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+    }
+    
     :deep(.ant-statistic-title) {
       margin-bottom: 8px;
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 14px;
+    }
+    
+    :deep(.ant-statistic-content) {
+      font-size: 30px;
+      font-weight: 600;
     }
     
     :deep(.ant-statistic-content-prefix) {
       margin-right: 8px;
+      font-size: 24px;
     }
   }
   
   .quick-entry-card {
+    border-radius: 2px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    
     .entry-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px;
+      padding: 20px;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 4px;
       transition: all 0.3s;
       
       &:hover {
-        background: #f5f5f5;
+        background: rgba(24, 144, 255, 0.05);
+        transform: translateY(-2px);
+        
+        .entry-icon {
+          transform: scale(1.1);
+        }
       }
       
       .entry-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
-        font-size: 24px;
-        margin-bottom: 8px;
+        font-size: 28px;
+        margin-bottom: 12px;
+        transition: all 0.3s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       }
       
       .entry-name {
-        font-size: 13px;
-        color: #333;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.85);
+        font-weight: 500;
       }
     }
   }
   
   .recent-card {
+    border-radius: 2px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    
+    :deep(.ant-card-head) {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 16px 24px;
+    }
+    
+    :deep(.ant-card-body) {
+      padding: 12px 24px;
+    }
+    
+    :deep(.ant-list-item) {
+      padding: 12px 0;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+    }
+    
     :deep(.ant-list-item-meta-title) {
       display: flex;
       align-items: center;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    :deep(.ant-list-item-meta-description) {
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.45);
     }
   }
   
   .chart-card {
     min-height: 300px;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    
+    :deep(.ant-card-head) {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 16px 24px;
+    }
+    
+    :deep(.ant-card-body) {
+      padding: 24px;
+    }
     
     .category-list {
       .category-item {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         
         &:last-child {
           margin-bottom: 0;
@@ -351,16 +417,23 @@ onMounted(() => {
         .category-info {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 4px;
+          margin-bottom: 8px;
           
           .category-name {
             font-size: 14px;
-            color: #333;
+            color: rgba(0, 0, 0, 0.85);
+            font-weight: 500;
           }
           
           .category-count {
-            font-size: 13px;
-            color: #999;
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.45);
+          }
+        }
+        
+        :deep(.ant-progress) {
+          .ant-progress-bg {
+            border-radius: 2px;
           }
         }
       }
@@ -373,15 +446,22 @@ onMounted(() => {
       align-items: center;
       
       .tag-item {
-        cursor: default;
+        cursor: pointer;
         padding: 4px 12px;
+        border-radius: 2px;
+        transition: all 0.3s;
+        
+        &:hover {
+          opacity: 0.8;
+          transform: scale(1.05);
+        }
       }
     }
   }
 }
 
 .mt-4 {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .ml-2 {

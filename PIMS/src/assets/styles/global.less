@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+// Ant Design Pro 标准主题变量
+@pro-header-hover-bg: rgba(0, 0, 0, 0.025);
+
 * {
   margin: 0;
   padding: 0;
@@ -9,67 +12,114 @@
 }
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.85);
+  line-height: 1.5715;
   background-color: #f0f2f5;
 }
 
-// 滚动条样式
+#app {
+  min-height: 100vh;
+}
+
+// Pro 风格滚动条
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #d9d9d9;
+  background-color: rgba(0, 0, 0, 0.15);
   border-radius: 3px;
+  transition: background-color 0.3s;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+  }
 }
 
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-// 页面容器
+// Pro 页面容器
 .page-container {
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
+  padding: 0;
+  background: transparent;
   min-height: calc(100vh - 180px);
-  
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 0;
-  }
 }
 
-// 搜索表单
+// Pro 卡片样式
+.pro-card,
+.ant-card {
+  background: #fff;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+// Pro 搜索表单
 .search-form {
   margin-bottom: 16px;
-  padding: 24px;
+  padding: 24px 24px 8px;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 2px;
   
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 16px 16px 8px;
+  }
+  
+  .ant-form-item {
+    margin-bottom: 16px;
   }
 }
 
-// 表格操作栏
+// Pro 表格操作栏
 .table-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 16px 24px;
+  background: transparent;
+  margin-bottom: 0;
   flex-wrap: wrap;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+  }
 }
 
-// 表格操作按钮
+// Pro 表格操作按钮
 .table-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+// Pro 表格容器
+.table-container {
+  background: #fff;
+  border-radius: 2px;
+  
+  .ant-table {
+    .ant-table-thead > tr > th {
+      background-color: #fafafa;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.85);
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .ant-table-tbody > tr {
+      &:hover > td {
+        background: #fafafa;
+      }
+      
+      > td {
+        border-bottom: 1px solid #f0f0f0;
+      }
+    }
+  }
 }
 
 // 响应式隐藏
@@ -104,8 +154,124 @@ html, body {
 .card-item {
   padding: 16px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: all 0.3s;
+  cursor: pointer;
+  
+  &:hover {
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.85);
+    }
+  }
+  
+  .card-content {
+    color: rgba(0, 0, 0, 0.65);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+}
+
+// Pro 页面标题
+.page-header-content {
+  background: #fff;
+  padding: 24px;
+  margin-bottom: 16px;
+  border-radius: 2px;
+  
+  .page-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.85);
+    line-height: 32px;
+  }
+  
+  .page-description {
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+    line-height: 22px;
+  }
+}
+
+// Pro 统计卡片
+.stat-card {
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.3s;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  }
+  
+  .ant-statistic-title {
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .ant-statistic-content {
+    font-size: 24px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+// Pro 按钮样式增强
+.ant-btn-primary {
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+  }
+}
+
+// Pro 表单样式
+.ant-form-item {
+  margin-bottom: 24px;
+}
+
+// Pro 模态框
+:deep(.ant-modal) {
+  .ant-modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 24px;
+  }
+  
+  .ant-modal-body {
+    padding: 24px;
+  }
+  
+  .ant-modal-footer {
+    border-top: 1px solid #f0f0f0;
+    padding: 10px 16px;
+  }
+}
+
+// 动画效果
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 // 表单项

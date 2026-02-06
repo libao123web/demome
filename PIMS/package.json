@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "build:static": "vite build --config vite.config.static.ts",
+    "build:pwa": "vite build --config vite.config.pwa.ts",
+    "build:all": "npm run build:static && npm run build:pwa",
+    "build:check": "vue-tsc && npm run build:all",
+    "preview": "vite preview",
+    "preview:static": "vite preview --outDir dist-static",
+    "preview:pwa": "vite preview --outDir dist-pwa"
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",

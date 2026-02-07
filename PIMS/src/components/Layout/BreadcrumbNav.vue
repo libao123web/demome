@@ -1,6 +1,6 @@
 <template>
   <a-breadcrumb class="breadcrumb-nav">
-    <a-breadcrumb-item>
+    <a-breadcrumb-item class="ml-[24px]">
       <span class="breadcrumb-label">当前位置：</span>
     </a-breadcrumb-item>
     <a-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="index">
@@ -59,11 +59,12 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 <style scoped lang="less">
 .breadcrumb-nav {
   padding: 16px 0 0;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
   
   :deep(.ant-breadcrumb-link) {
     color: rgba(0, 0, 0, 0.65);
     transition: color 0.3s;
+    // margin-left: 24px;
     
     &:hover {
       color: #1890ff;

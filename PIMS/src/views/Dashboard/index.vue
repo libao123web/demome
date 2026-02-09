@@ -136,7 +136,6 @@
               :key="tag.id" 
               :color="tag.color"
               class="tag-item"
-              :style="{ fontSize: getTagFontSize(tag.count) + 'px' }"
             >
               {{ tag.name }} ({{ tag.count }})
             </a-tag>
@@ -450,6 +449,7 @@ onMounted(() => {
         padding: 4px 12px;
         border-radius: 2px;
         transition: all 0.3s;
+        font-size: 14px;
         
         &:hover {
           opacity: 0.8;

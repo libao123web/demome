@@ -222,12 +222,11 @@
       </div>
     </a-card>
 
-    <!-- 详情弹窗 -->
-    <a-modal
+    <!-- 详情抽屉 -->
+    <DetailDrawer
       v-model:open="detailVisible"
       title="人员详情"
-      width="700px"
-      :footer="null"
+      :width="'60vw'"
     >
       <a-descriptions :column="2" bordered v-if="currentRecord">
         <a-descriptions-item label="姓名">{{ currentRecord.name }}</a-descriptions-item>
@@ -249,7 +248,7 @@
         <a-descriptions-item label="工作单位" :span="2">{{ currentRecord.workplace }}</a-descriptions-item>
         <a-descriptions-item label="备注" :span="2">{{ currentRecord.remark }}</a-descriptions-item>
       </a-descriptions>
-    </a-modal>
+    </DetailDrawer>
   </div>
 </template>
 
@@ -268,6 +267,7 @@ import {
 import { personnelApi, tagApi, categoryApi } from '@/api'
 import type { Personnel, Tag, Category } from '@/types'
 import { exportToExcel } from '@/utils/excel'
+import DetailDrawer from '@/components/DetailDrawer/index.vue'
 
 // 数据状态
 const loading = ref(false)

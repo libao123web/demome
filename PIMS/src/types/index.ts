@@ -6,6 +6,7 @@ export interface Personnel {
   phone?: string
   gender: 'male' | 'female'
   idCard: string
+  idType?: string
   birthDate?: string
   ethnicity?: string
   nativePlace?: string
@@ -17,6 +18,8 @@ export interface Personnel {
   positionId?: string
   tags?: Tag[]
   remark?: string
+  militaryRank?: string
+  maritalStatus?: string
   createTime?: string
   updateTime?: string
 }
@@ -30,6 +33,8 @@ export interface User {
   avatar?: string
   email?: string
   phone?: string
+  gender?: 'male' | 'female'
+  idCard?: string
   roles?: Role[]
   status: 'active' | 'inactive'
   lastLoginTime?: string

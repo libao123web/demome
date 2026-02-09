@@ -47,6 +47,9 @@
         </template>
       </a-dropdown>
     </div>
+
+    <!-- 个人信息抽屉 -->
+    <ProfileDrawer v-model:open="profileVisible" />
   </div>
 </template>
 
@@ -56,6 +59,7 @@ import { useRouter } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
+import ProfileDrawer from '@/components/ProfileDrawer/index.vue'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -74,6 +78,7 @@ const userStore = useUserStore()
 
 const refreshing = ref(false)
 const isFullscreen = ref(false)
+const profileVisible = ref(false)
 
 // 触发器点击
 const handleTriggerClick = () => {
@@ -118,7 +123,8 @@ const handleUserMenuClick = ({ key }: { key: string }) => {
       }
     })
   } else if (key === 'profile') {
-    // 可以跳转到个人信息页面
+    // 打开个人信息抽屉
+    profileVisible.value = true
   }
 }
 </script>

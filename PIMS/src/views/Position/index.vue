@@ -72,13 +72,14 @@
       </a-table>
     </a-card>
 
-    <!-- 新增/编辑弹窗 -->
-    <a-modal
+    <!-- 新增/编辑抽屉 -->
+    <FormDrawer
       v-model:open="modalVisible"
       :title="modalTitle"
-      @ok="handleSubmit"
+      :loading="submitLoading"
+      @confirm="handleSubmit"
       @cancel="handleCancel"
-      :confirmLoading="submitLoading"
+      :width="'60vw'"
     >
       <a-form
         ref="formRef"
@@ -126,7 +127,7 @@
           </a-radio-group>
         </a-form-item>
       </a-form>
-    </a-modal>
+    </FormDrawer>
   </div>
 </template>
 
@@ -141,6 +142,7 @@ import {
 } from '@ant-design/icons-vue'
 import { positionApi } from '@/api'
 import type { Position } from '@/types'
+import FormDrawer from '@/components/FormDrawer/index.vue'
 
 // 数据状态
 const loading = ref(false)

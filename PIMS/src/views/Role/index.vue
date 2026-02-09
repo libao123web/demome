@@ -80,14 +80,14 @@
       </a-table>
     </a-card>
 
-    <!-- 新增/编辑弹窗 -->
-    <a-modal
+    <!-- 新增/编辑抽屉 -->
+    <FormDrawer
       v-model:open="modalVisible"
       :title="modalTitle"
-      width="600px"
-      @ok="handleSubmit"
+      :loading="submitLoading"
+      @confirm="handleSubmit"
       @cancel="handleCancel"
-      :confirmLoading="submitLoading"
+      :width="'60vw'"
     >
       <a-form
         ref="formRef"
@@ -141,14 +141,13 @@
           </a-radio-group>
         </a-form-item>
       </a-form>
-    </a-modal>
+    </FormDrawer>
 
-    <!-- 详情弹窗 -->
-    <a-modal
+    <!-- 详情抽屉 -->
+    <DetailDrawer
       v-model:open="detailVisible"
       title="角色详情"
-      width="600px"
-      :footer="null"
+      :width="'60vw'"
     >
       <a-descriptions :column="1" bordered v-if="currentRecord">
         <a-descriptions-item label="角色名称">{{ currentRecord.name }}</a-descriptions-item>
@@ -168,7 +167,7 @@
           </div>
         </a-descriptions-item>
       </a-descriptions>
-    </a-modal>
+    </DetailDrawer>
   </div>
 </template>
 
@@ -183,6 +182,8 @@ import {
 } from '@ant-design/icons-vue'
 import { roleApi } from '@/api'
 import type { Role } from '@/types'
+import FormDrawer from '@/components/FormDrawer/index.vue'
+import DetailDrawer from '@/components/DetailDrawer/index.vue'
 
 // 权限分组
 const permissionGroups = [

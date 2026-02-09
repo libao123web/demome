@@ -107,14 +107,14 @@
       </a-table>
     </a-card>
 
-    <!-- 新增/编辑弹窗 -->
-    <a-modal
-      v-model:open="modalVisible"
-      :title="modalTitle"
-      width="800px"
-      @ok="handleSubmit"
+    <!-- 新增/编辑抽屉 -->
+    <FormDrawer
+      v-model:open="drawerVisible"
+      :title="drawerTitle"
+      :loading="submitLoading"
+      @confirm="handleSubmit"
       @cancel="handleCancel"
-      :confirmLoading="submitLoading"
+      :width="'60vw'"
     >
       <a-form
         ref="formRef"
@@ -122,15 +122,15 @@
         :rules="formRules"
         layout="vertical"
       >
-        <a-row :gutter="16">
+        <a-row :gutter="24">
+          <!-- 头像上传 -->
           <a-col :span="12">
-            <a-form-item label="姓名" name="name">
-              <a-input v-model:value="formState.name" placeholder="请输入姓名" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="身份证号" name="idCard">
-              <a-input v-model:value="formState.idCard" placeholder="请输入身份证号" />
+            <a-form-item label="人员照片" name="photo">
+              <AvatarUpload 
+                v-model="formState.photo" 
+                placeholder="上传图片"
+                hint="5M以内，支持PNG/JPG格式"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -142,40 +142,27 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="出生日期" name="birthDate">
-              <a-date-picker 
-                v-model:value="formState.birthDate" 
-                style="width: 100%" 
-                placeholder="请选择出生日期"
-                format="YYYY-MM-DD"
-                valueFormat="YYYY-MM-DD"
-              />
+            <a-form-item label="姓名" name="name">
+              <a-input v-model:value="formState.name" placeholder="请输入" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="民族" name="ethnicity">
-              <a-select v-model:value="formState.ethnicity" placeholder="请选择民族">
-                <a-select-option v-for="e in ethnicities" :key="e" :value="e">{{ e }}</a-select-option>
+            <a-form-item label="军衔" name="militaryRank">
+              <a-input v-model:value="formState.militaryRank" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="分类" name="categoryId">
+              <a-select v-model:value="formState.categoryId" placeholder="请输入">
+                <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                  {{ cat.name }}
+                </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="籍贯" name="nativePlace">
-              <a-input v-model:value="formState.nativePlace" placeholder="请输入籍贯" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="政治面貌" name="politicalStatus">
-              <a-select v-model:value="formState.politicalStatus" placeholder="请选择政治面貌">
-                <a-select-option value="党员">党员</a-select-option>
-                <a-select-option value="团员">团员</a-select-option>
-                <a-select-option value="群众">群众</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="学历" name="education">
-              <a-select v-model:value="formState.education" placeholder="请选择学历">
+            <a-form-item label="文化程度" name="education">
+              <a-select v-model:value="formState.education" placeholder="请输入">
                 <a-select-option value="博士">博士</a-select-option>
                 <a-select-option value="硕士">硕士</a-select-option>
                 <a-select-option value="本科">本科</a-select-option>
@@ -186,55 +173,84 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="联系电话" name="phone">
-              <a-input v-model:value="formState.phone" placeholder="请输入联系电话" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="分类" name="categoryId">
-              <a-select v-model:value="formState.categoryId" placeholder="请选择分类">
-                <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </a-select-option>
+            <a-form-item label="民族" name="ethnicity">
+              <a-select v-model:value="formState.ethnicity" placeholder="请输入">
+                <a-select-option v-for="e in ethnicities" :key="e" :value="e">{{ e }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="职务" name="positionId">
-              <a-select v-model:value="formState.positionId" placeholder="请选择职务">
-                <a-select-option v-for="pos in positions" :key="pos.id" :value="pos.id">
-                  {{ pos.name }}
-                </a-select-option>
+            <a-form-item label="籍贯" name="nativePlace">
+              <a-input v-model:value="formState.nativePlace" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="婚姻情况" name="maritalStatus">
+              <a-select v-model:value="formState.maritalStatus" placeholder="请输入">
+                <a-select-option value="未婚">未婚</a-select-option>
+                <a-select-option value="已婚">已婚</a-select-option>
+                <a-select-option value="离异">离异</a-select-option>
+                <a-select-option value="丧偶">丧偶</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item label="证件类型" name="idType">
+              <a-select v-model:value="formState.idType" placeholder="请输入">
+                <a-select-option value="身份证">身份证</a-select-option>
+                <a-select-option value="护照">护照</a-select-option>
+                <a-select-option value="军官证">军官证</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="证件号" name="idCard">
+              <a-input v-model:value="formState.idCard" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="出生日期" name="birthDate">
+              <a-date-picker 
+                v-model:value="formState.birthDate" 
+                style="width: 100%" 
+                placeholder="请输入"
+                format="YYYY-MM-DD"
+                valueFormat="YYYY-MM-DD"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="现居地址" name="address">
+              <a-input v-model:value="formState.address" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="手机号" name="phone">
+              <a-input v-model:value="formState.phone" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="24">
             <a-form-item label="标签" name="tagIds">
-              <a-select v-model:value="formState.tagIds" mode="multiple" placeholder="请选择标签">
-                <a-select-option v-for="tag in tags" :key="tag.id" :value="tag.id">
+              <div class="tag-selector">
+                <a-checkable-tag 
+                  v-for="tag in tags" 
+                  :key="tag.id"
+                  :checked="formState.tagIds?.includes(tag.id)"
+                  @change="checked => handleTagChange(tag.id, checked)"
+                >
                   {{ tag.name }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="24">
-            <a-form-item label="现住址" name="address">
-              <a-input v-model:value="formState.address" placeholder="请输入现住址" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="24">
-            <a-form-item label="工作单位" name="workplace">
-              <a-input v-model:value="formState.workplace" placeholder="请输入工作单位" />
+                </a-checkable-tag>
+              </div>
             </a-form-item>
           </a-col>
           <a-col :span="24">
             <a-form-item label="备注" name="remark">
-              <a-textarea v-model:value="formState.remark" :rows="3" placeholder="请输入备注" />
+              <a-textarea v-model:value="formState.remark" :rows="3" placeholder="请输入" />
             </a-form-item>
           </a-col>
         </a-row>
       </a-form>
-    </a-modal>
+    </FormDrawer>
 
     <!-- 详情弹窗 -->
     <a-modal
@@ -304,11 +320,14 @@ import {
   UploadOutlined,
   DownloadOutlined,
   UserOutlined,
-  InboxOutlined
+  InboxOutlined,
+  LeftOutlined
 } from '@ant-design/icons-vue'
 import { personnelApi, tagApi, categoryApi, positionApi } from '@/api'
 import type { Personnel, Tag, Category, Position } from '@/types'
 import { exportToExcel, importFromExcel, downloadTemplate as downloadTpl } from '@/utils/excel'
+import AvatarUpload from '@/components/AvatarUpload/index.vue'
+import FormDrawer from '@/components/FormDrawer/index.vue'
 
 // 数据状态
 const loading = ref(false)
@@ -355,7 +374,7 @@ const columns = [
 ]
 
 // 弹窗状态
-const modalVisible = ref(false)
+const drawerVisible = ref(false)
 const detailVisible = ref(false)
 const importVisible = ref(false)
 const isEdit = ref(false)
@@ -365,8 +384,10 @@ const fileList = ref<any[]>([])
 
 // 表单数据
 const formState = reactive<Partial<Personnel> & { tagIds?: string[] }>({
+  photo: '',
   name: '',
   idCard: '',
+  idType: '身份证',
   gender: 'male',
   birthDate: '',
   ethnicity: '',
@@ -379,7 +400,9 @@ const formState = reactive<Partial<Personnel> & { tagIds?: string[] }>({
   categoryId: undefined,
   positionId: undefined,
   tagIds: [],
-  remark: ''
+  remark: '',
+  militaryRank: '',
+  maritalStatus: ''
 })
 
 // 表单验证规则
@@ -393,7 +416,7 @@ const formRules = {
   phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }]
 }
 
-const modalTitle = computed(() => isEdit.value ? '编辑人员' : '新增人员')
+const drawerTitle = computed(() => isEdit.value ? '编辑人员' : '人员信息录入')
 
 // 获取分类名称
 const getCategoryName = (categoryId?: string) => {
@@ -456,14 +479,14 @@ const handleTableChange = (pag: any) => {
   loadData()
 }
 
-// 显示新增弹窗
+// 显示新增抽屉
 const showAddModal = () => {
   isEdit.value = false
   resetForm()
-  modalVisible.value = true
+  drawerVisible.value = true
 }
 
-// 显示编辑弹窗
+// 显示编辑抽屉
 const showEditModal = (record: Personnel) => {
   isEdit.value = true
   Object.assign(formState, {
@@ -471,7 +494,7 @@ const showEditModal = (record: Personnel) => {
     tagIds: record.tags?.map(t => t.id) || []
   })
   currentRecord.value = record
-  modalVisible.value = true
+  drawerVisible.value = true
 }
 
 // 显示详情弹窗
@@ -484,8 +507,10 @@ const showDetailModal = (record: Personnel) => {
 const resetForm = () => {
   Object.assign(formState, {
     id: undefined,
+    photo: '',
     name: '',
     idCard: '',
+    idType: '身份证',
     gender: 'male',
     birthDate: '',
     ethnicity: '',
@@ -498,9 +523,26 @@ const resetForm = () => {
     categoryId: undefined,
     positionId: undefined,
     tagIds: [],
-    remark: ''
+    remark: '',
+    militaryRank: '',
+    maritalStatus: ''
   })
   formRef.value?.resetFields()
+}
+
+// 处理标签选择
+const handleTagChange = (tagId: string, checked: boolean) => {
+  if (!formState.tagIds) {
+    formState.tagIds = []
+  }
+  if (checked) {
+    formState.tagIds.push(tagId)
+  } else {
+    const index = formState.tagIds.indexOf(tagId)
+    if (index > -1) {
+      formState.tagIds.splice(index, 1)
+    }
+  }
 }
 
 // 提交表单
@@ -523,7 +565,7 @@ const handleSubmit = async () => {
       await personnelApi.create(submitData as Personnel)
       message.success('新增成功')
     }
-    modalVisible.value = false
+    drawerVisible.value = false
     loadData()
   } catch (error: any) {
     if (error.errorFields) {
@@ -537,7 +579,7 @@ const handleSubmit = async () => {
 
 // 取消
 const handleCancel = () => {
-  modalVisible.value = false
+  drawerVisible.value = false
   resetForm()
 }
 
@@ -664,6 +706,41 @@ onMounted(() => {
         font-size: 16px;
         font-weight: 500;
       }
+    }
+  }
+}
+
+.drawer-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 16px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  :deep(.ant-tag-checkable) {
+    border: 1px solid #d9d9d9;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+    &:hover {
+      border-color: #1890ff;
+    }
+    
+    &.ant-tag-checkable-checked {
+      background: #e6f7ff;
+      border-color: #1890ff;
+      color: #1890ff;
     }
   }
 }

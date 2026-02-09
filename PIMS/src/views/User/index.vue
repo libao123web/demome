@@ -64,16 +64,22 @@
               {{ record.name?.charAt(0) || record.username?.charAt(0) }}
             </a-avatar>
           </template>
-          <template v-if="column.key === 'roles'">
+          <template v-if="column.key === 'gender'">
+            {{ record.gender === 'male' ? '男' : record.gender === 'female' ? '女' : '-' }}
+          </template>
+          <template v-if="column.key === 'tags'">
             <a-tag v-for="role in record.roles" :key="role.id" color="blue">
               {{ role.name }}
             </a-tag>
             <span v-if="!record.roles?.length">-</span>
           </template>
+          <template v-if="column.key === 'idCard'">
+            {{ record.idCard ? record.idCard.replace(/(\d{4})\d{10}(\d{4})/, '$1****$2') : '-' }}
+          </template>
           <template v-if="column.key === 'status'">
             <a-badge 
               :status="record.status === 'active' ? 'success' : 'error'" 
-              :text="record.status === 'active' ? '启用' : '禁用'" 
+              :text="record.status === 'active' ? '正常' : '禁用'" 
             />
           </template>
           <template v-if="column.key === 'action'">
@@ -81,15 +87,12 @@
               <a-button type="link" size="small" @click="showEditModal(record)">
                 编辑
               </a-button>
-              <a-button type="link" size="small" @click="handleResetPassword(record)">
-                重置密码
-              </a-button>
               <a-popconfirm
-                :title="record.status === 'active' ? '确定要禁用此用户吗？' : '确定要启用此用户吗？'"
-                @confirm="handleToggleStatus(record)"
+                title="确定要强制下线此用户吗？"
+                @confirm="handleForceOffline(record)"
               >
-                <a-button type="link" size="small" :danger="record.status === 'active'">
-                  {{ record.status === 'active' ? '禁用' : '启用' }}
+                <a-button type="link" size="small">
+                  强制下线
                 </a-button>
               </a-popconfirm>
               <a-popconfirm
@@ -220,13 +223,15 @@ const searchForm = reactive({
 // 表格列
 const columns = [
   { title: '头像', key: 'avatar', width: 80 },
-  { title: '用户名', dataIndex: 'username', key: 'username', width: 120 },
   { title: '姓名', dataIndex: 'name', key: 'name', width: 100 },
-  { title: '邮箱', dataIndex: 'email', key: 'email', width: 180 },
+  { title: '性别', key: 'gender', width: 80 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
-  { title: '角色', key: 'roles', width: 150 },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '操作', key: 'action', width: 220, fixed: 'right' }
+  { title: '标签', key: 'tags', width: 150 },
+  { title: '身份证', dataIndex: 'idCard', key: 'idCard', width: 150 },
+  { title: '账号状态', key: 'status', width: 100 },
+  { title: '最近登录记录', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 160 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 160 },
+  { title: '操作', key: 'action', width: 180, fixed: 'right' }
 ]
 
 // 弹窗状态
@@ -415,6 +420,17 @@ const handleResetPassword = (record: User) => {
   newPassword.value = ''
   confirmPassword.value = ''
   resetPwdVisible.value = true
+}
+
+// 强制下线
+const handleForceOffline = async (record: User) => {
+  try {
+    // 模拟调用接口强制下线
+    await new Promise(resolve => setTimeout(resolve, 500))
+    message.success(`用户 ${record.name} 已成功下线`)
+  } catch (error) {
+    message.error('强制下线失败')
+  }
 }
 
 // 确认重置密码

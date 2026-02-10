@@ -1,4 +1,4 @@
-import { get, post, del } from './request'
+import { get, post, put, del } from './request'
 import type { Personnel, User, Tag, Category, Role, Position, PageResult, LoginLog } from '@/types'
 
 // ==================== 登录 ====================
@@ -19,7 +19,7 @@ export const personnelApi = {
     post<Personnel>('/personnel/add', data),
   
   update: (id: string | number, data: Partial<Personnel>) => 
-    post<Personnel>('/personnel/update', { ...data, id }),
+    put<Personnel>('/personnel/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/personnel/delete/${id}`),
@@ -37,7 +37,7 @@ export const userApi = {
     post<User>('/user/add', data),
   
   update: (id: string | number, data: Partial<User>) => 
-    post<User>('/user/update', { ...data, id }),
+    put<User>('/user/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/user/delete/${id}`),
@@ -55,7 +55,7 @@ export const tagApi = {
     post<Tag>('/tag/add', data),
   
   update: (id: string | number, data: Partial<Tag>) => 
-    post<Tag>('/tag/update', { ...data, id }),
+    put<Tag>('/tag/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/tag/delete/${id}`),
@@ -73,7 +73,7 @@ export const categoryApi = {
     post<Category>('/category/add', data),
   
   update: (id: string | number, data: Partial<Category>) => 
-    post<Category>('/category/update', { ...data, id }),
+    put<Category>('/category/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/category/delete/${id}`)
@@ -88,7 +88,7 @@ export const roleApi = {
     post<Role>('/role/add', data),
   
   update: (id: string | number, data: Partial<Role>) => 
-    post<Role>('/role/update', { ...data, id }),
+    put<Role>('/role/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/role/delete/${id}`)
@@ -103,7 +103,7 @@ export const positionApi = {
     post<Position>('/position/add', data),
   
   update: (id: string | number, data: Partial<Position>) => 
-    post<Position>('/position/update', { ...data, id }),
+    put<Position>('/position/update', { ...data, id }),
   
   delete: (id: string | number) => 
     del(`/position/delete/${id}`)

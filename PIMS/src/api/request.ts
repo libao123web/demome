@@ -52,6 +52,18 @@ export async function post<T = any>(url: string, data?: any, config?: AxiosReque
   return response.data.data
 }
 
+// 封装 PUT 请求
+export async function put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  const response = await request.put<ApiResponse<T>>(url, data, config)
+  return response.data.data
+}
+
+// 封装 PATCH 请求
+export async function patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  const response = await request.patch<ApiResponse<T>>(url, data, config)
+  return response.data.data
+}
+
 // 封装 DELETE 请求
 export async function del<T = any>(url: string): Promise<T> {
   const response = await request.delete<ApiResponse<T>>(url)

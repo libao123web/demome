@@ -2,21 +2,21 @@
   <div class="user-management">
     <!-- 搜索区域 -->
     <a-card class="search-card">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
+      <a-form layout="inline" :model="searchParams" @finish="handleSearch">
         <a-row :gutter="[16, 16]" class="w-full">
           <a-col :xs="24" :sm="12" :md="6">
             <a-form-item label="用户名" class="w-full">
-              <a-input v-model:value="searchForm.username" placeholder="请输入用户名" allowClear />
+              <a-input v-model:value="searchParams.username" placeholder="请输入用户名" allowClear />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="6">
             <a-form-item label="姓名" class="w-full">
-              <a-input v-model:value="searchForm.name" placeholder="请输入姓名" allowClear />
+              <a-input v-model:value="searchParams.name" placeholder="请输入姓名" allowClear />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="6">
             <a-form-item label="状态" class="w-full">
-              <a-select v-model:value="searchForm.status" placeholder="请选择状态" allowClear>
+              <a-select v-model:value="searchParams.status" placeholder="请选择状态" allowClear>
                 <a-select-option value="active">启用</a-select-option>
                 <a-select-option value="inactive">禁用</a-select-option>
               </a-select>
@@ -24,13 +24,11 @@
           </a-col>
           <a-col :xs="24" :sm="12" :md="6">
             <a-space>
-              <a-button type="primary" html-type="submit">
-                <SearchOutlined />
-                搜索
+              <a-button type="primary" html-type="submit" :loading="loading">
+                <SearchOutlined /> 搜索
               </a-button>
               <a-button @click="resetSearch">
-                <ReloadOutlined />
-                重置
+                <ReloadOutlined /> 重置
               </a-button>
             </a-space>
           </a-col>
@@ -42,9 +40,8 @@
     <a-card class="table-card">
       <div class="table-header">
         <div class="table-title">用户列表</div>
-        <a-button type="primary" @click="showAddModal">
-          <PlusOutlined />
-          添加用户
+        <a-button type="primary" @click="openCreate">
+          <PlusOutlined /> 添加用户
         </a-button>
       </div>
 
@@ -64,17 +61,11 @@
               {{ record.name?.charAt(0) || record.username?.charAt(0) }}
             </a-avatar>
           </template>
-          <template v-if="column.key === 'gender'">
-            {{ record.gender === 'male' ? '男' : record.gender === 'female' ? '女' : '-' }}
-          </template>
-          <template v-if="column.key === 'tags'">
+          <template v-if="column.key === 'roles'">
             <a-tag v-for="role in record.roles" :key="role.id" color="blue">
               {{ role.name }}
             </a-tag>
             <span v-if="!record.roles?.length">-</span>
-          </template>
-          <template v-if="column.key === 'idCard'">
-            {{ record.idCard ? record.idCard.replace(/(\d{4})\d{10}(\d{4})/, '$1****$2') : '-' }}
           </template>
           <template v-if="column.key === 'status'">
             <a-badge 
@@ -84,21 +75,8 @@
           </template>
           <template v-if="column.key === 'action'">
             <a-space>
-              <a-button type="link" size="small" @click="showEditModal(record)">
-                编辑
-              </a-button>
-              <a-popconfirm
-                title="确定要强制下线此用户吗？"
-                @confirm="handleForceOffline(record)"
-              >
-                <a-button type="link" size="small">
-                  强制下线
-                </a-button>
-              </a-popconfirm>
-              <a-popconfirm
-                title="确定要删除此用户吗？"
-                @confirm="handleDelete(record.id)"
-              >
+              <a-button type="link" size="small" @click="openEditWithRoles(record)">编辑</a-button>
+              <a-popconfirm title="确定要删除此用户吗？" @confirm="handleDelete(record.id)">
                 <a-button type="link" size="small" danger>删除</a-button>
               </a-popconfirm>
             </a-space>
@@ -109,24 +87,15 @@
 
     <!-- 新增/编辑弹窗 -->
     <a-modal
-      v-model:open="modalVisible"
-      :title="modalTitle"
+      v-model:open="visible"
+      :title="isEdit ? '编辑用户' : '添加用户'"
       @ok="handleSubmit"
-      @cancel="handleCancel"
+      @cancel="close"
       :confirmLoading="submitLoading"
     >
-      <a-form
-        ref="formRef"
-        :model="formState"
-        :rules="formRules"
-        layout="vertical"
-      >
+      <a-form ref="formRef" :model="formState" :rules="formRules" layout="vertical">
         <a-form-item label="用户名" name="username">
-          <a-input 
-            v-model:value="formState.username" 
-            placeholder="请输入用户名" 
-            :disabled="isEdit"
-          />
+          <a-input v-model:value="formState.username" placeholder="请输入用户名" :disabled="isEdit" />
         </a-form-item>
         
         <a-form-item v-if="!isEdit" label="密码" name="password">
@@ -146,11 +115,7 @@
         </a-form-item>
         
         <a-form-item label="角色" name="roleIds">
-          <a-select 
-            v-model:value="formState.roleIds" 
-            mode="multiple" 
-            placeholder="请选择角色"
-          >
+          <a-select v-model:value="formState.roleIds" mode="multiple" placeholder="请选择角色">
             <a-select-option v-for="role in roles" :key="role.id" :value="role.id">
               {{ role.name }}
             </a-select-option>
@@ -165,96 +130,62 @@
         </a-form-item>
       </a-form>
     </a-modal>
-
-    <!-- 重置密码弹窗 -->
-    <a-modal
-      v-model:open="resetPwdVisible"
-      title="重置密码"
-      @ok="confirmResetPassword"
-      @cancel="resetPwdVisible = false"
-    >
-      <a-form layout="vertical">
-        <a-form-item label="新密码">
-          <a-input-password v-model:value="newPassword" placeholder="请输入新密码" />
-        </a-form-item>
-        <a-form-item label="确认密码">
-          <a-input-password v-model:value="confirmPassword" placeholder="请再次输入新密码" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
-import { message } from 'ant-design-vue'
-import type { FormInstance } from 'ant-design-vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  PlusOutlined
-} from '@ant-design/icons-vue'
+import { ref, onMounted, computed } from 'vue'
+import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { userApi, roleApi } from '@/api'
 import type { User, Role } from '@/types'
+import { useTable } from '@/composables/useTable'
+import { useForm } from '@/composables/useForm'
 
-// 数据状态
-const loading = ref(false)
-const submitLoading = ref(false)
-const dataSource = ref<User[]>([])
+// 基础数据
 const roles = ref<Role[]>([])
 
-// 分页
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0,
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
-})
-
-// 搜索表单
-const searchForm = reactive({
-  username: '',
-  name: '',
-  status: undefined as string | undefined
+onMounted(async () => {
+  try {
+    const res = await roleApi.getList()
+    roles.value = res.data
+  } catch (e) {
+    console.error(e)
+  }
 })
 
 // 表格列
 const columns = [
   { title: '头像', key: 'avatar', width: 80 },
+  { title: '用户名', dataIndex: 'username', key: 'username', width: 120 },
   { title: '姓名', dataIndex: 'name', key: 'name', width: 100 },
-  { title: '性别', key: 'gender', width: 80 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
-  { title: '标签', key: 'tags', width: 150 },
-  { title: '身份证', dataIndex: 'idCard', key: 'idCard', width: 150 },
+  { title: '角色', key: 'roles', width: 150 },
   { title: '账号状态', key: 'status', width: 100 },
-  { title: '最近登录记录', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 160 },
+  { title: '最近登录', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 160 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 160 },
-  { title: '操作', key: 'action', width: 180, fixed: 'right' }
+  { title: '操作', key: 'action', width: 150, fixed: 'right' }
 ]
 
-// 弹窗状态
-const modalVisible = ref(false)
-const resetPwdVisible = ref(false)
-const isEdit = ref(false)
-const currentRecord = ref<User | null>(null)
-const formRef = ref<FormInstance>()
-const newPassword = ref('')
-const confirmPassword = ref('')
-
-// 表单数据
-const formState = reactive<Partial<User> & { password?: string; roleIds?: string[] }>({
-  username: '',
-  password: '',
-  name: '',
-  email: '',
-  phone: '',
-  roleIds: [],
-  status: 'active'
+// 表格逻辑
+const { 
+  loading, dataSource, pagination, searchParams, loadData, handleTableChange, handleSearch, resetSearch 
+} = useTable({
+  fetchApi: userApi.getList,
+  defaultSearchParams: { username: '', name: '', status: undefined }
 })
 
-// 表单验证规则
+onMounted(() => loadData())
+
+const handleDelete = async (id: string) => {
+  try {
+    await userApi.delete(id)
+    loadData()
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// 表单逻辑
 const formRules = computed(() => ({
   username: [
     { required: true, message: '请输入用户名' },
@@ -269,227 +200,46 @@ const formRules = computed(() => ({
   phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }]
 }))
 
-const modalTitle = computed(() => isEdit.value ? '编辑用户' : '添加用户')
-
-// 加载数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    const res = await userApi.getList({
-      page: pagination.current,
-      pageSize: pagination.pageSize,
-      ...searchForm
-    })
-    dataSource.value = res.data
-    pagination.total = res.total
-  } catch (error) {
-    message.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
+const defaultFormState = {
+  username: '', password: '', name: '', email: '', phone: '', roleIds: [], status: 'active' as 'active' | 'inactive'
 }
 
-// 加载角色
-const loadRoles = async () => {
-  try {
-    const res = await roleApi.getList()
-    roles.value = res.data
-  } catch (error) {
-    console.error('加载角色失败', error)
-  }
-}
-
-// 搜索
-const handleSearch = () => {
-  pagination.current = 1
-  loadData()
-}
-
-// 重置搜索
-const resetSearch = () => {
-  searchForm.username = ''
-  searchForm.name = ''
-  searchForm.status = undefined
-  handleSearch()
-}
-
-// 表格变化
-const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  loadData()
-}
-
-// 显示新增弹窗
-const showAddModal = () => {
-  isEdit.value = false
-  resetForm()
-  modalVisible.value = true
-}
-
-// 显示编辑弹窗
-const showEditModal = (record: User) => {
-  isEdit.value = true
-  Object.assign(formState, {
-    ...record,
-    roleIds: record.roles?.map(r => r.id) || []
-  })
-  currentRecord.value = record
-  modalVisible.value = true
-}
-
-// 重置表单
-const resetForm = () => {
-  Object.assign(formState, {
-    id: undefined,
-    username: '',
-    password: '',
-    name: '',
-    email: '',
-    phone: '',
-    roleIds: [],
-    status: 'active'
-  })
-  formRef.value?.resetFields()
-}
-
-// 提交表单
-const handleSubmit = async () => {
-  try {
-    await formRef.value?.validate()
-    submitLoading.value = true
-    
+const { 
+  visible, isEdit, submitLoading, formRef, formState, openCreate, openEdit, close, handleSubmit 
+} = useForm<Partial<User> & { password?: string; roleIds: string[] }>({
+  defaultValues: defaultFormState,
+  createApi: async (data) => {
     const submitData = {
-      ...formState,
-      roles: formState.roleIds?.map(id => roles.value.find(r => r.id === id)).filter(Boolean)
+      ...data,
+      roles: data.roleIds?.map(id => roles.value.find(r => r.id === id)).filter(Boolean)
+    }
+    delete (submitData as any).roleIds
+    await userApi.create(submitData as User)
+  },
+  updateApi: async (id, data) => {
+    const submitData = {
+      ...data,
+      roles: data.roleIds?.map(id => roles.value.find(r => r.id === id)).filter(Boolean)
     }
     delete (submitData as any).roleIds
     delete (submitData as any).password
-    
-    if (isEdit.value) {
-      await userApi.update(currentRecord.value!.id, submitData as User)
-      message.success('更新成功')
-    } else {
-      await userApi.create({ ...submitData, password: formState.password } as User)
-      message.success('添加成功')
-    }
-    modalVisible.value = false
-    loadData()
-  } catch (error: any) {
-    if (error.errorFields) {
-      return
-    }
-    message.error('操作失败')
-  } finally {
-    submitLoading.value = false
-  }
-}
-
-// 取消
-const handleCancel = () => {
-  modalVisible.value = false
-  resetForm()
-}
-
-// 切换状态
-const handleToggleStatus = async (record: User) => {
-  try {
-    const newStatus = record.status === 'active' ? 'inactive' : 'active'
-    await userApi.update(record.id, { ...record, status: newStatus })
-    message.success('操作成功')
-    loadData()
-  } catch (error) {
-    message.error('操作失败')
-  }
-}
-
-// 删除
-const handleDelete = async (id: string) => {
-  try {
-    await userApi.delete(id)
-    message.success('删除成功')
-    loadData()
-  } catch (error) {
-    message.error('删除失败')
-  }
-}
-
-// 重置密码
-const handleResetPassword = (record: User) => {
-  currentRecord.value = record
-  newPassword.value = ''
-  confirmPassword.value = ''
-  resetPwdVisible.value = true
-}
-
-// 强制下线
-const handleForceOffline = async (record: User) => {
-  try {
-    // 模拟调用接口强制下线
-    await new Promise(resolve => setTimeout(resolve, 500))
-    message.success(`用户 ${record.name} 已成功下线`)
-  } catch (error) {
-    message.error('强制下线失败')
-  }
-}
-
-// 确认重置密码
-const confirmResetPassword = async () => {
-  if (!newPassword.value) {
-    message.warning('请输入新密码')
-    return
-  }
-  if (newPassword.value !== confirmPassword.value) {
-    message.warning('两次输入的密码不一致')
-    return
-  }
-  if (newPassword.value.length < 6) {
-    message.warning('密码至少6个字符')
-    return
-  }
-  
-  try {
-    // 模拟重置密码
-    message.success('密码重置成功')
-    resetPwdVisible.value = false
-  } catch (error) {
-    message.error('重置失败')
-  }
-}
-
-onMounted(() => {
-  loadRoles()
-  loadData()
+    await userApi.update(id, submitData as User)
+  },
+  onSuccess: () => loadData()
 })
+
+const openEditWithRoles = (record: User) => {
+  openEdit({
+    ...record,
+    roleIds: record.roles?.map(r => r.id) || []
+  })
+}
 </script>
 
 <style scoped lang="less">
 .user-management {
-  .search-card {
-    margin-bottom: 16px;
-    
-    :deep(.ant-form-item) {
-      margin-bottom: 0;
-      width: 100%;
-    }
-  }
-  
-  .table-card {
-    .table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      
-      .table-title {
-        font-size: 16px;
-        font-weight: 500;
-      }
-    }
-  }
+  .search-card { margin-bottom: 16px; :deep(.ant-form-item) { margin-bottom: 0; width: 100%; } }
+  .table-header { display: flex; justify-content: space-between; margin-bottom: 16px; .table-title { font-size: 16px; font-weight: 500; } }
 }
-
-.w-full {
-  width: 100%;
-}
+.w-full { width: 100%; }
 </style>

@@ -66,8 +66,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'photo'">
-            <a-avatar v-if="record.photo" :src="record.photo" :size="40" />
-            <a-avatar v-else :size="40"><template #icon><UserOutlined /></template></a-avatar>
+            <a-avatar v-if="record.photo" :src="record.photo" :size="40" shape="square" />
+            <a-avatar v-else :size="40" shape="square"><template #icon><UserOutlined /></template></a-avatar>
           </template>
           <template v-if="column.key === 'gender'">
             {{ record.gender === 'male' ? '男' : '女' }}
@@ -96,7 +96,7 @@
     <!-- 新增/编辑抽屉 -->
     <FormDrawer
       v-model:open="visible"
-      :title="isEdit ? '编辑人员' : '人员信息录入'"
+      :title="isEdit ? '编辑人员' : '录入人员'"
       :loading="submitLoading"
       @confirm="handleSubmit"
       @cancel="close"
@@ -163,6 +163,42 @@
                </div>
             </a-form-item>
           </a-col>
+          
+          <!-- 六维能力 -->
+          <a-col :span="24">
+            <a-divider orientation="left">能力维度</a-divider>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="领导能力" name="leadershipAbility">
+              <a-input-number v-model:value="formState.leadershipAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="团队合作" name="teamworkAbility">
+              <a-input-number v-model:value="formState.teamworkAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="沟通能力" name="communicationAbility">
+              <a-input-number v-model:value="formState.communicationAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="管理技巧" name="managementAbility">
+              <a-input-number v-model:value="formState.managementAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="军事能力" name="militaryAbility">
+              <a-input-number v-model:value="formState.militaryAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="专业能力" name="professionalAbility">
+              <a-input-number v-model:value="formState.professionalAbility" :min="0" :max="100" placeholder="0-100" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          
           <a-col :span="24">
             <a-form-item label="备注" name="remark">
               <a-textarea v-model:value="formState.remark" :rows="3" placeholder="请输入" />
@@ -173,22 +209,13 @@
       </a-form>
     </FormDrawer>
     
-    <!-- 详情弹窗 -->
-    <a-modal v-model:open="detailVisible" title="人员详情" width="700px" :footer="null">
-      <a-descriptions :column="2" bordered v-if="currentRecord">
-        <a-descriptions-item label="姓名">{{ currentRecord.name }}</a-descriptions-item>
-        <a-descriptions-item label="身份证号">{{ currentRecord.idCard }}</a-descriptions-item>
-        <a-descriptions-item label="性别">{{ currentRecord.gender === 'male' ? '男' : '女' }}</a-descriptions-item>
-        <a-descriptions-item label="出生日期">{{ currentRecord.birthDate }}</a-descriptions-item>
-        <a-descriptions-item label="分类">{{ getCategoryName(currentRecord.categoryId) }}</a-descriptions-item>
-        <a-descriptions-item label="联系电话">{{ currentRecord.phone }}</a-descriptions-item>
-        <a-descriptions-item label="标签" :span="2">
-          <a-tag v-for="tag in currentRecord.tags" :key="tag.id" :color="tag.color">{{ tag.name }}</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="现住址" :span="2">{{ currentRecord.address }}</a-descriptions-item>
-        <a-descriptions-item label="备注" :span="2">{{ currentRecord.remark }}</a-descriptions-item>
-      </a-descriptions>
-    </a-modal>
+    
+    <!-- 详情抽屉 -->
+    <PersonnelDetailDrawer
+      v-model:open="detailVisible"
+      :personnel="currentRecord"
+    />
+
 
     <!-- 导入弹窗 -->
     <a-modal v-model:open="importVisible" title="导入人员数据" @ok="confirmImport" @cancel="importVisible = false">
@@ -218,10 +245,13 @@ import {
 import { personnelApi, tagApi, categoryApi, positionApi } from '@/api'
 import type { Personnel, Tag, Category } from '@/types'
 import { exportToExcel, importFromExcel, downloadTemplate as downloadTpl } from '@/utils/excel'
-import AvatarUpload from '@/components/AvatarUpload/index.vue'
-import FormDrawer from '@/components/FormDrawer/index.vue'
 import { useTable } from '@/composables/useTable'
 import { useForm } from '@/composables/useForm'
+import FormDrawer from '@/components/FormDrawer/index.vue'
+import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
+import AvatarUpload from '@/components/AvatarUpload/index.vue'
+
+
 
 // --- 基础数据 ---
 const categories = ref<Category[]>([])
@@ -289,28 +319,62 @@ const formRules = {
 
 const defaultFormState = {
   photo: '', name: '', idCard: '', gender: 'male' as 'male' | 'female', birthDate: '', 
-  phone: '', address: '', categoryId: undefined, tagIds: [], remark: ''
+  phone: '', address: '', categoryId: undefined, tagIds: [], remark: '',
+  leadershipAbility: 0, teamworkAbility: 0, communicationAbility: 0,
+  managementAbility: 0, militaryAbility: 0, professionalAbility: 0
 }
 
 const { 
   visible, isEdit, submitLoading, formRef, formState, openCreate, openEdit, close, handleSubmit 
-} = useForm<Partial<Personnel> & { tagIds: string[] }>({
+} = useForm<Partial<Personnel> & { tagIds: string[]; leadershipAbility?: number; teamworkAbility?: number; communicationAbility?: number; managementAbility?: number; militaryAbility?: number; professionalAbility?: number }>({
   defaultValues: defaultFormState,
   createApi: async (data) => {
+    // 构建能力对象
+    const ability = {
+      leadershipAbility: data.leadershipAbility || 0,
+      teamworkAbility: data.teamworkAbility || 0,
+      communicationAbility: data.communicationAbility || 0,
+      managementAbility: data.managementAbility || 0,
+      militaryAbility: data.militaryAbility || 0,
+      professionalAbility: data.professionalAbility || 0
+    }
     // 转换 tagIds 为 tags 对象数组
     const submitData = {
       ...data,
-      tags: data.tagIds?.map(id => tags.value.find(t => t.id === id)).filter(Boolean)
+      tags: data.tagIds?.map(id => tags.value.find(t => t.id === id)).filter(Boolean),
+      ability
     }
     delete (submitData as any).tagIds
+    delete (submitData as any).leadershipAbility
+    delete (submitData as any).teamworkAbility
+    delete (submitData as any).communicationAbility
+    delete (submitData as any).managementAbility
+    delete (submitData as any).militaryAbility
+    delete (submitData as any).professionalAbility
     await personnelApi.create(submitData)
   },
   updateApi: async (id, data) => {
+    // 构建能力对象
+    const ability = {
+      leadershipAbility: data.leadershipAbility || 0,
+      teamworkAbility: data.teamworkAbility || 0,
+      communicationAbility: data.communicationAbility || 0,
+      managementAbility: data.managementAbility || 0,
+      militaryAbility: data.militaryAbility || 0,
+      professionalAbility: data.professionalAbility || 0
+    }
     const submitData = {
       ...data,
-      tags: data.tagIds?.map(id => tags.value.find(t => t.id === id)).filter(Boolean)
+      tags: data.tagIds?.map(id => tags.value.find(t => t.id === id)).filter(Boolean),
+      ability
     }
     delete (submitData as any).tagIds
+    delete (submitData as any).leadershipAbility
+    delete (submitData as any).teamworkAbility
+    delete (submitData as any).communicationAbility
+    delete (submitData as any).managementAbility
+    delete (submitData as any).militaryAbility
+    delete (submitData as any).professionalAbility
     await personnelApi.update(id, submitData)
   },
   onSuccess: () => loadData()
@@ -319,7 +383,13 @@ const {
 const openEditWithTags = (record: Personnel) => {
   openEdit({
     ...record,
-    tagIds: record.tags?.map(t => t.id) || []
+    tagIds: record.tags?.map(t => t.id) || [],
+    leadershipAbility: record.ability?.leadershipAbility || 0,
+    teamworkAbility: record.ability?.teamworkAbility || 0,
+    communicationAbility: record.ability?.communicationAbility || 0,
+    managementAbility: record.ability?.managementAbility || 0,
+    militaryAbility: record.ability?.militaryAbility || 0,
+    professionalAbility: record.ability?.professionalAbility || 0
   })
 }
 
@@ -384,3 +454,5 @@ const downloadTemplate = () => {
 .mt-4 { margin-top: 16px; }
 .w-full { width: 100%; }
 </style>
+
+

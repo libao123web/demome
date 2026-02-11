@@ -1,3 +1,13 @@
+// 人员能力维度
+export interface PersonnelAbility {
+  leadershipAbility: number      // 领导能力
+  teamworkAbility: number        // 团队合作
+  communicationAbility: number   // 沟通能力
+  managementAbility: number      // 管理技巧
+  militaryAbility: number        // 军事能力
+  professionalAbility: number    // 专业能力
+}
+
 // 人员档案
 export interface Personnel {
   id: string
@@ -20,6 +30,7 @@ export interface Personnel {
   remark?: string
   militaryRank?: string
   maritalStatus?: string
+  ability?: PersonnelAbility  // 新增：能力维度数据
   createTime?: string
   updateTime?: string
 }
@@ -123,3 +134,30 @@ export interface PermissionNode {
   title: string
   children?: PermissionNode[]
 }
+
+// 相似人员关系
+export interface SimilarPersonnel {
+  id: string
+  name: string
+  photo?: string
+  similarity: number  // 相似度 0-100
+  personnel: Personnel
+}
+
+// 关系图节点
+export interface GraphNode {
+  id: string
+  name: string
+  photo?: string
+  value: number
+  symbolSize: number
+  category?: number
+}
+
+// 关系图连线
+export interface GraphLink {
+  source: string
+  target: string
+  value: number  // 相似度
+}
+

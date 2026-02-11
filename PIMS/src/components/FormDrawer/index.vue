@@ -6,7 +6,9 @@
     :width="computedWidth"
     :closable="true"
     :maskClosable="true"
+    :destroyOnClose="true"
     @close="handleClose"
+    @afterOpenChange="handleAfterOpenChange"
   >
     <div class="form-drawer-content">
       <slot></slot>
@@ -79,6 +81,13 @@ watch(visible, (val) => {
 const handleClose = () => {
   if (!props.loading) {
     visible.value = false
+    emit('cancel')
+  }
+}
+
+const handleAfterOpenChange = (open: boolean) => {
+  // 当抽屉完全关闭后触发，用于清理表单状态
+  if (!open) {
     emit('cancel')
   }
 }

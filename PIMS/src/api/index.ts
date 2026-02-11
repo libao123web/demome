@@ -25,7 +25,11 @@ export const personnelApi = {
     del(`/personnel/delete/${id}`),
   
   import: (data: Partial<Personnel>[]) => 
-    post<{ count: number }>('/personnel/import', data)
+    post<{ count: number }>('/personnel/import', data),
+  
+  // 获取相似人员
+  getSimilar: (id: string | number) => 
+    get<any[]>(`/personnel/similar/${id}`)
 }
 
 // ==================== 用户管理 ====================

@@ -27,7 +27,7 @@ interface BreadcrumbItem {
 const routeMap: Record<string, BreadcrumbItem[]> = {
   '/personnel/input': [
     { title: '人员档案查询', path: '/personnel/input' },
-    { title: '人员信息录入' }
+    { title: '人员信息管理' }
   ],
   '/personnel/tags': [
     { title: '人员档案查询', path: '/personnel/input' },

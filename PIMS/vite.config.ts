@@ -65,7 +65,8 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    hmr: false  // 完全关闭热更新，不再有 WebSocket 轮询
   },
   build: {
     outDir: 'dist',

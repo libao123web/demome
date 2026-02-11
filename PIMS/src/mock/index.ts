@@ -81,13 +81,19 @@ function initDefaultData() {
     saveList(KEYS.POSITIONS, positions)
   }
 
-  // 初始化人员数据
-  if (!getStorage(KEYS.PERSONNEL)) {
-    const tags = getList<Tag>(KEYS.TAGS)
+  // 初始化人员档案
+  // 检查是否需要重新初始化（如果没有数据或数据缺少新的6维ability字段）
+  const existingPersonnel = getList<Personnel>(KEYS.PERSONNEL)
+  const needsReinit = !existingPersonnel.length || 
+    !existingPersonnel[0]?.ability ||
+    !existingPersonnel[0]?.ability.leadershipAbility // 检查新字段
+  
+  if (needsReinit) {
     const categories = getList<Category>(KEYS.CATEGORIES)
+    const tags = getList<Tag>(KEYS.TAGS)
     
-    const personnel: Personnel[] = Mock.mock({
-      'list|15': [{
+    const personnel = Mock.mock({
+      'list|50': [{
         'id': () => generateId(),
         'name': '@cname',
         'phone': /^1[3-9]\d{9}$/,
@@ -106,12 +112,21 @@ function initDefaultData() {
           const shuffled = [...tags].sort(() => 0.5 - Math.random())
           return shuffled.slice(0, count)
         },
+        'ability': {
+          'leadershipAbility|70-100': 1,
+          'teamworkAbility|70-100': 1,
+          'communicationAbility|70-100': 1,
+          'managementAbility|70-100': 1,
+          'militaryAbility|70-100': 1,
+          'professionalAbility|70-100': 1
+        },
         'remark': '@cparagraph(1, 2)',
         'createTime': '@datetime("yyyy-MM-dd HH:mm:ss")'
       }]
     }).list
     
     saveList(KEYS.PERSONNEL, personnel)
+    console.log('[Mock] Personnel data re-initialized with 6 new ability dimensions (70-100):', personnel[0]?.ability)
   }
 }
 

@@ -76,7 +76,7 @@ const menuList = computed(() => [
     title: '人员档案查询',
     icon: iconMap.UserOutlined,
     children: [
-      { key: '/personnel/input', title: '人员信息录入' },
+      { key: '/personnel/input', title: '人员信息管理' },
       { key: '/personnel/tags', title: '人员标签管理' },
       { key: '/personnel/category', title: '人员分类管理' }
     ]

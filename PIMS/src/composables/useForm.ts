@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { message } from 'ant-design-vue'
 
@@ -95,6 +95,18 @@ export function useForm<T extends Record<string, any>>(options: UseFormOptions<T
       submitLoading.value = false
     }
   }
+
+  // 监听 visible 变化，关闭时重置表单
+  watch(visible, (val) => {
+    if (!val) {
+      // 延迟重置，等待抽屉关闭动画完成
+      setTimeout(() => {
+        if (!visible.value) {
+          resetForm()
+        }
+      }, 300)
+    }
+  })
 
   return {
     visible,

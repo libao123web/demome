@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
             path: 'input',
             name: 'PersonnelInput',
             component: () => import('@/views/Personnel/Input/index.vue'),
-            meta: { title: '人员信息录入', permissions: ['personnel:list'] }
+            meta: { title: '人员信息管理', permissions: ['personnel:list'] }
           },
           {
             path: 'tags',

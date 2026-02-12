@@ -92,10 +92,16 @@ const allMenuList = [
     permissionPrefix: 'search'
   },
   {
-    key: '/position',
+    key: 'position',
     title: '人员岗位管理',
     icon: iconMap.ApartmentOutlined,
-    permissionPrefix: 'position'
+    permissionPrefix: 'position',
+    children: [
+      { key: '/position/organization', title: '组织管理', permissionPrefix: 'position' },
+      { key: '/position/members', title: '人员岗位', permissionPrefix: 'position' },
+      { key: '/position/transfer', title: '更换人员', permissionPrefix: 'position' },
+      { key: '/position/tags', title: '岗位标签管理', permissionPrefix: 'position:tags' }
+    ]
   },
   {
     key: 'user',

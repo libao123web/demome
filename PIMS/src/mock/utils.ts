@@ -7,7 +7,10 @@ export const KEYS = {
   TAGS: 'pims_tags',
   CATEGORIES: 'pims_categories',
   ROLES: 'pims_roles',
-  POSITIONS: 'pims_positions'
+  POSITIONS: 'pims_positions',
+  ORGANIZATIONS: 'pims_organizations',
+  ORG_MEMBERS: 'pims_org_members',
+  POSITION_TAG: 'pims_position_tags'
 }
 
 // 生成唯一ID

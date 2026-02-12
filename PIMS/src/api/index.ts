@@ -1,5 +1,5 @@
 import { get, post, put, del } from './request'
-import type { Personnel, User, Tag, Category, Role, Position, PageResult, LoginLog } from '@/types'
+import type { Personnel, User, Tag, Category, Role, Position, PageResult, LoginLog, Organization, OrganizationMember, PositionTag } from '@/types'
 
 // ==================== 登录 ====================
 export const authApi = {
@@ -121,8 +121,66 @@ export const positionApi = {
     del(`/position/delete/${id}`)
 }
 
+// ==================== 组织架构管理 ====================
+export const organizationApi = {
+  // 获取组织树
+  getTree: () => 
+    get<Organization[]>('/organization/tree'),
+  
+  // 创建组织
+  create: (data: Partial<Organization>) => 
+    post<Organization>('/organization/add', data),
+  
+  // 更新组织
+  update: (id: string | number, data: Partial<Organization>) => 
+    put<Organization>('/organization/update', { ...data, id }),
+  
+  // 删除组织
+  delete: (id: string | number) => 
+    del(`/organization/delete/${id}`),
+  
+  // 获取组织下的人员列表
+  getMembers: (organizationId: string) => 
+    get<OrganizationMember[]>(`/organization/members/${organizationId}`),
+  
+  // 添加人员到组织
+  addMember: (data: { organizationId: string; personnelId: string; positionName?: string }) => 
+    post<OrganizationMember>('/organization/member/add', data),
+  
+  // 从组织移除人员
+  removeMember: (memberId: string) => 
+    del(`/organization/member/remove/${memberId}`),
+  
+  // 更换人员组织（单个）
+  transferMember: (data: { memberId: string; targetOrganizationId: string }) => 
+    post<void>('/organization/member/transfer', data),
+  
+  // 批量更换人员组织
+  batchTransferMembers: (data: { memberIds: string[]; targetOrganizationId: string }) => 
+    post<void>('/organization/member/batch-transfer', data),
+  
+  // 获取推荐人员（根据能力匹配）
+  getRecommendedPersonnel: (organizationId: string) => 
+    get<(Personnel & { matchScore: number })[]>(`/organization/recommended/${organizationId}`)
+}
+
 // ==================== 登录日志 ====================
 export const loginLogApi = {
   getList: (params?: { userId?: number }) => 
     get<PageResult<LoginLog>>('/login-log/list', params)
+}
+
+// ==================== 岗位标签 ====================
+export const positionTagApi = {
+  getList: (params?: PageParams) => 
+    get<PageResult<PositionTag>>('/position-tag/list', params),
+  
+  create: (data: Partial<PositionTag>) => 
+    post<PositionTag>('/position-tag/create', data),
+  
+  update: (id: string, data: Partial<PositionTag>) => 
+    put<PositionTag>(`/position-tag/update/${id}`, data),
+  
+  delete: (id: string) => 
+    del<void>(`/position-tag/delete/${id}`)
 }

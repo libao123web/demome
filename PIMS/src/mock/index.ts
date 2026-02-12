@@ -207,5 +207,7 @@ import './modules/tag'
 import './modules/category'
 import './modules/role'
 import './modules/position'
+import './modules/positionTag'  // 确保在 organization 之前导入
+import './modules/organization'
 
 console.log('[Mock] Mock.js initialized successfully')

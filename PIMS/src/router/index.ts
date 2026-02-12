@@ -60,8 +60,34 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'position',
         name: 'Position',
-        component: () => import('@/views/Position/index.vue'),
-        meta: { title: '人员岗位管理', icon: 'ApartmentOutlined', permissionPrefix: 'position' }
+        redirect: '/position/organization',
+        meta: { title: '人员岗位管理', icon: 'ApartmentOutlined', permissionPrefix: 'position' },
+        children: [
+          {
+            path: 'organization',
+            name: 'PositionOrganization',
+            component: () => import('@/views/Position/Organization/index.vue'),
+            meta: { title: '组织管理', permissionPrefix: 'position' }
+          },
+          {
+            path: 'members',
+            name: 'PositionMembers',
+            component: () => import('@/views/Position/Members/index.vue'),
+            meta: { title: '人员岗位', permissionPrefix: 'position' }
+          },
+          {
+            path: 'transfer',
+            name: 'PositionTransfer',
+            component: () => import('@/views/Position/Transfer/index.vue'),
+            meta: { title: '更换人员', permissionPrefix: 'position' }
+          },
+          {
+            path: 'tags',
+            name: 'PositionTags',
+            component: () => import('@/views/Position/PositionTags/index.vue'),
+            meta: { title: '岗位标签管理', permissionPrefix: 'position:tags' }
+          }
+        ]
       },
       // 用户管理
       {

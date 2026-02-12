@@ -98,6 +98,39 @@ export interface Position {
   createTime?: string
 }
 
+// 组织架构
+export interface Organization {
+  id: string
+  name: string
+  code?: string
+  parentId?: string
+  sort?: number
+  description?: string
+  positionTagId?: string  // 岗位标签ID
+  memberCount?: number
+  children?: Organization[]
+  createTime?: string
+}
+
+// 组织人员（组织下的人员分配）
+export interface OrganizationMember {
+  id: string
+  organizationId: string
+  personnelId: string
+  positionName?: string  // 岗位名称，如"技术员"
+  personnel?: Personnel  // 关联的人员信息
+  joinTime?: string
+}
+
+// 岗位标签
+export interface PositionTag {
+  id: string
+  name: string
+  description?: string
+  createTime?: string
+  updateTime?: string
+}
+
 // 登录日志
 export interface LoginLog {
   id: string

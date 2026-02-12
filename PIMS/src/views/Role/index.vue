@@ -87,21 +87,31 @@
         </a-form-item>
         
         <a-form-item label="权限配置" name="permissions">
-          <div class="permission-config">
-            <a-checkbox-group v-model:value="formState.permissions">
-              <a-row :gutter="[0, 8]">
-                <a-col :span="24" v-for="group in permissionGroups" :key="group.name">
-                  <div class="permission-group">
-                    <div class="group-title">{{ group.name }}</div>
-                    <a-row :gutter="[8, 8]">
-                      <a-col :span="8" v-for="perm in group.permissions" :key="perm.value">
-                        <a-checkbox :value="perm.value">{{ perm.label }}</a-checkbox>
-                      </a-col>
-                    </a-row>
-                  </div>
-                </a-col>
-              </a-row>
-            </a-checkbox-group>
+          <a-alert 
+            v-if="isAdminRole" 
+            message="管理员角色拥有所有权限,不可修改" 
+            type="info" 
+            show-icon 
+            class="mb-3"
+          />
+          <div class="permission-tree-container">
+            <div class="tree-actions">
+              <a-space>
+                <a-button size="small" @click="handleCheckAll" :disabled="isAdminRole">全选</a-button>
+                <a-button size="small" @click="handleUncheckAll" :disabled="isAdminRole">取消全选</a-button>
+                <a-button size="small" @click="handleExpandAll">展开全部</a-button>
+                <a-button size="small" @click="handleCollapseAll">收起全部</a-button>
+              </a-space>
+            </div>
+            <a-tree
+              v-model:checkedKeys="formState.permissions"
+              v-model:expandedKeys="expandedKeys"
+              checkable
+              :disabled="isAdminRole"
+              :tree-data="permissionTreeData"
+              :field-names="{ title: 'title', key: 'key', children: 'children' }"
+              :checkStrictly="false"
+            />
           </div>
         </a-form-item>
         
@@ -117,47 +127,54 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { roleApi } from '@/api'
 import type { Role } from '@/types'
 import FormDrawer from '@/components/FormDrawer/index.vue'
 import { useTable } from '@/composables/useTable'
 import { useForm } from '@/composables/useForm'
+import { permissionTree, getPermissionLabel, getAllPermissionKeys } from '@/constants/permissions'
 
-// 权限分组
-const permissionGroups = [
-  {
-    name: '人员管理',
-    permissions: [
-      { label: '人员列表', value: 'personnel:list' },
-      { label: '人员新增', value: 'personnel:create' },
-      { label: '人员编辑', value: 'personnel:edit' },
-      { label: '人员删除', value: 'personnel:delete' }
-    ]
-  },
-  {
-    name: '搜索查询',
-    permissions: [
-      { label: '人员检索', value: 'search:view' }
-    ]
-  },
-  {
-    name: '系统管理',
-    permissions: [
-      { label: '用户管理', value: 'user:manage' },
-      { label: '角色管理', value: 'role:manage' },
-      { label: '职务管理', value: 'position:manage' }
-    ]
-  }
-]
+// 权限树数据
+const permissionTreeData = permissionTree
+const expandedKeys = ref<string[]>([])
 
-const getPermissionLabel = (value: string): string => {
-  for (const group of permissionGroups) {
-    const perm = group.permissions.find(p => p.value === value)
-    if (perm) return perm.label
+// 判断是否为管理员角色
+const isAdminRole = computed(() => {
+  return formState.code === 'admin' || formState.name === '管理员'
+})
+
+// 权限树操作
+const handleCheckAll = () => {
+  if (formState.value) {
+    formState.value.permissions = getAllPermissionKeys()
   }
-  return value
+}
+
+const handleUncheckAll = () => {
+  if (formState.value) {
+    formState.value.permissions = []
+  }
+}
+
+const handleExpandAll = () => {
+  // 获取所有有子节点的节点key
+  const keys: string[] = []
+  const traverse = (nodes: typeof permissionTree) => {
+    nodes.forEach(node => {
+      if (node.children && node.children.length > 0) {
+        keys.push(node.key)
+        traverse(node.children)
+      }
+    })
+  }
+  traverse(permissionTree)
+  expandedKeys.value = keys
+}
+
+const handleCollapseAll = () => {
+  expandedKeys.value = []
 }
 
 // 表格列
@@ -212,29 +229,114 @@ const formRules = {
 }
 
 const defaultFormState = {
-  name: '', code: '', description: '', permissions: [], status: 'active' as 'active' | 'inactive'
+  name: '', code: '', description: '', permissions: [] as string[], status: 'active' as 'active' | 'inactive'
 }
 
 const { 
-  visible, isEdit, submitLoading, formRef, formState, openCreate, openEdit, close, handleSubmit 
+  visible, isEdit, submitLoading, formRef, formState, openCreate, openEdit: originalOpenEdit, close, handleSubmit 
 } = useForm<Partial<Role>>({
   defaultValues: defaultFormState,
   createApi: roleApi.create,
   updateApi: roleApi.update,
   onSuccess: () => loadData()
 })
+
+// 包装 openEdit，管理员角色自动选中所有权限
+const openEdit = (record: Role) => {
+  originalOpenEdit(record)
+  // 延迟执行以确保 formState 已更新
+  setTimeout(() => {
+    if (isAdminRole.value) {
+      formState.permissions = getAllPermissionKeys()
+    }
+  }, 0)
+}
+
+// 监听角色编码和名称变化，管理员角色自动选中所有权限
+watch(
+  () => [formState.code, formState.name],
+  () => {
+    if (isAdminRole.value) {
+      formState.permissions = getAllPermissionKeys()
+    }
+  }
+)
 </script>
 
 <style scoped lang="less">
 .role-management {
-  .search-card { margin-bottom: 16px; :deep(.ant-form-item) { margin-bottom: 0; width: 100%; } }
-  .table-header { display: flex; justify-content: space-between; margin-bottom: 16px; .table-title { font-size: 16px; font-weight: 500; } }
-}
-.permission-config {
-  .permission-group {
-    margin-bottom: 16px;
-    .group-title { font-weight: 500; margin-bottom: 8px; color: rgba(0,0,0,0.85); }
+  .search-card { 
+    margin-bottom: 16px; 
+    :deep(.ant-form-item) { 
+      margin-bottom: 0; 
+      width: 100%; 
+    } 
+  }
+  .table-header { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 16px; 
+    .table-title { 
+      font-size: 16px; 
+      font-weight: 500; 
+    } 
   }
 }
-.w-full { width: 100%; }
+
+.permission-tree-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 12px;
+  
+  .tree-actions {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :deep(.ant-tree) {
+    max-height: 400px;
+    overflow-y: auto;
+    
+    .ant-tree-checkbox {
+      margin-right: 8px;
+    }
+    
+    .ant-tree-node-content-wrapper {
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+    
+    // 第三级节点横向排列
+    .ant-tree-treenode {
+      // 找到第二级节点下的子节点容器
+      .ant-tree-child-tree {
+        .ant-tree-child-tree {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding-left: 24px !important;
+          
+          .ant-tree-treenode {
+            flex: 0 0 auto;
+            width: auto;
+            
+            .ant-tree-indent {
+              display: none;
+            }
+            
+            .ant-tree-switcher {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.w-full { 
+  width: 100%; 
+}
 </style>

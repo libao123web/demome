@@ -27,25 +27,25 @@ const routes: RouteRecordRaw[] = [
         path: 'personnel',
         name: 'Personnel',
         redirect: '/personnel/input',
-        meta: { title: '人员档案查询', icon: 'UserOutlined', permissions: ['personnel:list'] },
+        meta: { title: '人员档案查询', icon: 'UserOutlined', permissionPrefix: 'personnel' },
         children: [
           {
             path: 'input',
             name: 'PersonnelInput',
             component: () => import('@/views/Personnel/Input/index.vue'),
-            meta: { title: '人员信息管理', permissions: ['personnel:list'] }
+            meta: { title: '人员信息管理', permissionPrefix: 'personnel:input' }
           },
           {
             path: 'tags',
             name: 'PersonnelTags',
             component: () => import('@/views/Personnel/Tags/index.vue'),
-            meta: { title: '人员标签管理', permissions: ['personnel:list'] }
+            meta: { title: '人员标签管理', permissionPrefix: 'personnel:tags' }
           },
           {
             path: 'category',
             name: 'PersonnelCategory',
             component: () => import('@/views/Personnel/Category/index.vue'),
-            meta: { title: '人员分类管理', permissions: ['personnel:list'] }
+            meta: { title: '人员分类管理', permissionPrefix: 'personnel:category' }
           }
         ]
       },
@@ -54,27 +54,27 @@ const routes: RouteRecordRaw[] = [
         path: 'search',
         name: 'Search',
         component: () => import('@/views/Search/index.vue'),
-        meta: { title: '人员检索', icon: 'SearchOutlined', permissions: ['search:view'] }
+        meta: { title: '人员检索', icon: 'SearchOutlined', permissionPrefix: 'search' }
       },
       // 人员岗位管理
       {
         path: 'position',
         name: 'Position',
         component: () => import('@/views/Position/index.vue'),
-        meta: { title: '人员岗位管理', icon: 'ApartmentOutlined', permissions: ['position:manage'] }
+        meta: { title: '人员岗位管理', icon: 'ApartmentOutlined', permissionPrefix: 'position' }
       },
       // 用户管理
       {
         path: 'user',
         name: 'UserManagement',
         redirect: '/user/list',
-        meta: { title: '用户管理', icon: 'TeamOutlined', permissions: ['user:manage'] },
+        meta: { title: '用户管理', icon: 'TeamOutlined', permissionPrefix: 'system:user' },
         children: [
           {
             path: 'list',
             name: 'UserList',
             component: () => import('@/views/User/index.vue'),
-            meta: { title: '用户列表', permissions: ['user:manage'] }
+            meta: { title: '用户列表', permissionPrefix: 'system:user' }
           }
         ]
       },
@@ -83,13 +83,13 @@ const routes: RouteRecordRaw[] = [
         path: 'role',
         name: 'RoleManagement',
         redirect: '/role/list',
-        meta: { title: '角色管理', icon: 'SafetyCertificateOutlined', permissions: ['role:manage'] },
+        meta: { title: '角色管理', icon: 'SafetyCertificateOutlined', permissionPrefix: 'system:role' },
         children: [
           {
             path: 'list',
             name: 'RoleList',
             component: () => import('@/views/Role/index.vue'),
-            meta: { title: '角色列表', permissions: ['role:manage'] }
+            meta: { title: '角色列表', permissionPrefix: 'system:role' }
           }
         ]
       }
@@ -99,7 +99,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/403',
     name: 'Forbidden',
-    component: () => import('@/views/Login/index.vue'), // 暂用登录页
+    component: () => import('@/views/403/index.vue'),
     meta: { title: '无权限', requiresAuth: false }
   },
   // 404
@@ -113,18 +113,6 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
-
-/**
- * 检查用户是否拥有路由要求的权限
- */
-function checkPermission(userPermissions: string[], routePermissions?: string[]): boolean {
-  // 没有设置权限要求，默认放行
-  if (!routePermissions || routePermissions.length === 0) return true
-  // 超级管理员放行
-  if (userPermissions.includes('*')) return true
-  // 检查是否拥有任一所需权限
-  return routePermissions.some(p => userPermissions.includes(p))
-}
 
 // 路由守卫
 router.beforeEach((to, _from, next) => {
@@ -145,21 +133,11 @@ router.beforeEach((to, _from, next) => {
     return
   }
   
-  // 检查权限
-  const userPermissions: string[] = []
-  const roles = userStore.userRoles
-  if (roles) {
-    roles.forEach(role => {
-      if (role.permissions) {
-        userPermissions.push(...role.permissions)
-      }
-    })
-  }
-  
-  const routePermissions = to.meta.permissions as string[] | undefined
-  if (!checkPermission(userPermissions, routePermissions)) {
+  // 检查权限（使用 permissionPrefix）
+  const permissionPrefix = to.meta.permissionPrefix as string | undefined
+  if (permissionPrefix && !userStore.hasPermissionPrefix(permissionPrefix)) {
     message.error('您没有访问该页面的权限')
-    next('/dashboard')
+    next('/403')
     return
   }
   

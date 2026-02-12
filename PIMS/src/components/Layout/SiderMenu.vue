@@ -41,6 +41,7 @@
 import { ref, watch, computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useUserStore } from '@/stores/user'
 import {
   HomeOutlined,
   UserOutlined,
@@ -53,6 +54,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
+const userStore = useUserStore()
 
 // 图标组件映射
 const iconMap: Record<string, any> = {
@@ -64,50 +66,83 @@ const iconMap: Record<string, any> = {
   SafetyCertificateOutlined: h(SafetyCertificateOutlined)
 }
 
-// 菜单配置
-const menuList = computed(() => [
+// 原始菜单配置
+const allMenuList = [
   {
     key: '/dashboard',
     title: '首页',
-    icon: iconMap.HomeOutlined
+    icon: iconMap.HomeOutlined,
+    permissionPrefix: '' // 首页不需要权限
   },
   {
     key: 'personnel',
     title: '人员档案查询',
     icon: iconMap.UserOutlined,
+    permissionPrefix: 'personnel',
     children: [
-      { key: '/personnel/input', title: '人员信息管理' },
-      { key: '/personnel/tags', title: '人员标签管理' },
-      { key: '/personnel/category', title: '人员分类管理' }
+      { key: '/personnel/input', title: '人员信息管理', permissionPrefix: 'personnel:input' },
+      { key: '/personnel/tags', title: '人员标签管理', permissionPrefix: 'personnel:tags' },
+      { key: '/personnel/category', title: '人员分类管理', permissionPrefix: 'personnel:category' }
     ]
   },
   {
     key: '/search',
     title: '人员检索',
-    icon: iconMap.SearchOutlined
+    icon: iconMap.SearchOutlined,
+    permissionPrefix: 'search'
   },
   {
     key: '/position',
     title: '人员岗位管理',
-    icon: iconMap.ApartmentOutlined
+    icon: iconMap.ApartmentOutlined,
+    permissionPrefix: 'position'
   },
   {
     key: 'user',
     title: '用户管理',
     icon: iconMap.TeamOutlined,
+    permissionPrefix: 'system:user',
     children: [
-      { key: '/user/list', title: '用户列表' }
+      { key: '/user/list', title: '用户列表', permissionPrefix: 'system:user' }
     ]
   },
   {
     key: 'role',
     title: '角色管理',
     icon: iconMap.SafetyCertificateOutlined,
+    permissionPrefix: 'system:role',
     children: [
-      { key: '/role/list', title: '角色列表' }
+      { key: '/role/list', title: '角色列表', permissionPrefix: 'system:role' }
     ]
   }
-])
+]
+
+// 根据权限过滤菜单
+const menuList = computed(() => {
+  const filterMenu = (menus: typeof allMenuList): typeof allMenuList => {
+    return menus
+      .filter(menu => {
+        // 没有设置权限前缀，直接显示
+        if (!menu.permissionPrefix) return true
+        // 检查是否有权限
+        return userStore.hasPermissionPrefix(menu.permissionPrefix)
+      })
+      .map(menu => {
+        if (menu.children) {
+          const filteredChildren = menu.children.filter(child => {
+            if (!child.permissionPrefix) return true
+            return userStore.hasPermissionPrefix(child.permissionPrefix)
+          })
+          // 如果子菜单全部被过滤，不显示父菜单
+          if (filteredChildren.length === 0) return null
+          return { ...menu, children: filteredChildren }
+        }
+        return menu
+      })
+      .filter(Boolean) as typeof allMenuList
+  }
+  return filterMenu(allMenuList)
+})
 
 // 选中的菜单
 const selectedKeys = ref<string[]>([])

@@ -22,10 +22,49 @@ function initDefaultData() {
         id: '2', 
         name: '普通用户', 
         code: 'user',
-        permissions: ['personnel:list', 'search:view'], 
+        permissions: [
+          'personnel:input:view',
+          'personnel:tags:view',
+          'personnel:category:view',
+          'search:view',
+          'search:detail'
+        ], 
         status: 'active',
         description: '普通用户，只有查看权限',
         createTime: getCurrentTime() 
+      },
+      {
+        id: '3',
+        name: '人事主管',
+        code: 'hr_manager',
+        permissions: [
+          'personnel:input:view',
+          'personnel:input:create',
+          'personnel:input:edit',
+          'personnel:input:delete',
+          'personnel:input:import',
+          'personnel:input:export',
+          'personnel:tags:view',
+          'personnel:tags:create',
+          'personnel:tags:edit',
+          'personnel:tags:delete',
+          'personnel:tags:assign',
+          'personnel:category:view',
+          'personnel:category:create',
+          'personnel:category:edit',
+          'personnel:category:delete',
+          'search:view',
+          'search:similar',
+          'search:detail',
+          'search:export',
+          'position:view',
+          'position:create',
+          'position:edit',
+          'position:delete'
+        ],
+        status: 'active',
+        description: '人事主管，拥有人员管理相关权限',
+        createTime: getCurrentTime()
       }
     ]
     saveList(KEYS.ROLES, roles)
@@ -42,7 +81,31 @@ function initDefaultData() {
         name: '管理员',
         email: 'admin@example.com',
         phone: '13800138000',
-        roles: [roles[0]],
+        roles: [roles.find(r => r.code === 'admin')!],
+        status: 'active',
+        lastLoginTime: getCurrentTime(),
+        createTime: getCurrentTime()
+      },
+      {
+        id: '2',
+        username: 'user',
+        password: '123456',
+        name: '普通用户',
+        email: 'user@example.com',
+        phone: '13800138001',
+        roles: [roles.find(r => r.code === 'user')!],
+        status: 'active',
+        lastLoginTime: getCurrentTime(),
+        createTime: getCurrentTime()
+      },
+      {
+        id: '3',
+        username: 'hr',
+        password: '123456',
+        name: '人事主管',
+        email: 'hr@example.com',
+        phone: '13800138002',
+        roles: [roles.find(r => r.code === 'hr_manager')!],
         status: 'active',
         lastLoginTime: getCurrentTime(),
         createTime: getCurrentTime()

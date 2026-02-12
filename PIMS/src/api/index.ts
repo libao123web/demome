@@ -47,7 +47,15 @@ export const userApi = {
     del(`/user/delete/${id}`),
   
   toggleStatus: (id: string | number) => 
-    post<User>(`/user/toggle-status/${id}`)
+    post<User>(`/user/toggle-status/${id}`),
+  
+  // 强制下线
+  forceOffline: (id: string | number) => 
+    post<void>(`/user/force-offline/${id}`),
+  
+  // 重置密码
+  resetPassword: (id: string | number, password: string) => 
+    post<void>(`/user/reset-password/${id}`, { password })
 }
 
 // ==================== 标签管理 ====================

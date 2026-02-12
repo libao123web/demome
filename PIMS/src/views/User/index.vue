@@ -76,6 +76,13 @@
           <template v-if="column.key === 'action'">
             <a-space>
               <a-button type="link" size="small" @click="openEditWithRoles(record)">编辑</a-button>
+              <a-button type="link" size="small" @click="openResetPassword(record)">重置密码</a-button>
+              <a-popconfirm 
+                title="确定要强制该用户下线吗？" 
+                @confirm="handleForceOffline(record.id)"
+              >
+                <a-button type="link" size="small">强制下线</a-button>
+              </a-popconfirm>
               <a-popconfirm title="确定要删除此用户吗？" @confirm="handleDelete(record.id)">
                 <a-button type="link" size="small" danger>删除</a-button>
               </a-popconfirm>
@@ -85,15 +92,19 @@
       </a-table>
     </a-card>
 
-    <!-- 新增/编辑弹窗 -->
-    <a-modal
+    <!-- 新增/编辑抽屉 -->
+    <FormDrawer
       v-model:open="visible"
       :title="isEdit ? '编辑用户' : '添加用户'"
-      @ok="handleSubmit"
+      :loading="submitLoading"
+      @confirm="handleSubmit"
       @cancel="close"
-      :confirmLoading="submitLoading"
     >
       <a-form ref="formRef" :model="formState" :rules="formRules" layout="vertical">
+        <a-form-item label="头像" name="avatar">
+          <AvatarUpload v-model:value="formState.avatar" />
+        </a-form-item>
+        
         <a-form-item label="用户名" name="username">
           <a-input v-model:value="formState.username" placeholder="请输入用户名" :disabled="isEdit" />
         </a-form-item>
@@ -129,17 +140,44 @@
           </a-radio-group>
         </a-form-item>
       </a-form>
+    </FormDrawer>
+
+    <!-- 重置密码弹窗 -->
+    <a-modal
+      v-model:open="resetPwdVisible"
+      title="重置密码"
+      :confirmLoading="resetPwdLoading"
+      @ok="handleResetPwdConfirm"
+      @cancel="resetPwdVisible = false"
+    >
+      <a-form ref="resetPwdFormRef" :model="resetPwdForm" :rules="resetPwdRules" layout="vertical">
+        <a-alert 
+          :message="`您正在为用户 ${resetPwdUser?.name || resetPwdUser?.username} 重置密码`" 
+          type="info" 
+          show-icon 
+          class="mb-4"
+        />
+        <a-form-item label="新密码" name="password">
+          <a-input-password v-model:value="resetPwdForm.password" placeholder="请输入新密码" />
+        </a-form-item>
+        <a-form-item label="确认密码" name="confirmPassword">
+          <a-input-password v-model:value="resetPwdForm.confirmPassword" placeholder="请再次输入新密码" />
+        </a-form-item>
+      </a-form>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { message } from 'ant-design-vue'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { userApi, roleApi } from '@/api'
 import type { User, Role } from '@/types'
 import { useTable } from '@/composables/useTable'
 import { useForm } from '@/composables/useForm'
+import FormDrawer from '@/components/FormDrawer/index.vue'
+import AvatarUpload from '@/components/AvatarUpload/index.vue'
 
 // 基础数据
 const roles = ref<Role[]>([])
@@ -163,7 +201,7 @@ const columns = [
   { title: '账号状态', key: 'status', width: 100 },
   { title: '最近登录', dataIndex: 'lastLoginTime', key: 'lastLoginTime', width: 160 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 160 },
-  { title: '操作', key: 'action', width: 150, fixed: 'right' }
+  { title: '操作', key: 'action', width: 280, fixed: 'right' }
 ]
 
 // 表格逻辑
@@ -185,6 +223,66 @@ const handleDelete = async (id: string) => {
   }
 }
 
+const handleForceOffline = async (id: string) => {
+  try {
+    await userApi.forceOffline(id)
+    message.success('用户已强制下线')
+    loadData()
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// 重置密码相关
+const resetPwdVisible = ref(false)
+const resetPwdLoading = ref(false)
+const resetPwdUser = ref<User | null>(null)
+const resetPwdFormRef = ref()
+const resetPwdForm = ref({
+  password: '',
+  confirmPassword: ''
+})
+
+const resetPwdRules = {
+  password: [
+    { required: true, message: '请输入新密码' },
+    { min: 6, message: '密码至少6个字符' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码' },
+    {
+      validator: async (_rule: any, value: string) => {
+        if (value && value !== resetPwdForm.value.password) {
+          return Promise.reject('两次输入的密码不一致')
+        }
+        return Promise.resolve()
+      }
+    }
+  ]
+}
+
+const openResetPassword = (record: User) => {
+  resetPwdUser.value = record
+  resetPwdForm.value = { password: '', confirmPassword: '' }
+  resetPwdVisible.value = true
+}
+
+const handleResetPwdConfirm = async () => {
+  try {
+    await resetPwdFormRef.value?.validate()
+    resetPwdLoading.value = true
+    await userApi.resetPassword(resetPwdUser.value!.id, resetPwdForm.value.password)
+    message.success(`用户 ${resetPwdUser.value?.name || resetPwdUser.value?.username} 密码已重置成功`)
+    resetPwdVisible.value = false
+  } catch (e: any) {
+    if (!e.errorFields) {
+      console.error(e)
+    }
+  } finally {
+    resetPwdLoading.value = false
+  }
+}
+
 // 表单逻辑
 const formRules = computed(() => ({
   username: [
@@ -201,7 +299,7 @@ const formRules = computed(() => ({
 }))
 
 const defaultFormState = {
-  username: '', password: '', name: '', email: '', phone: '', roleIds: [], status: 'active' as 'active' | 'inactive'
+  avatar: '', username: '', password: '', name: '', email: '', phone: '', roleIds: [], status: 'active' as 'active' | 'inactive'
 }
 
 const { 

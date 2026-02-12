@@ -57,3 +57,19 @@ Mock.mock(/\/api\/user\/delete\//, 'delete', (options: any) => {
   
   return { code: 200, data: null, message: '删除成功' }
 })
+
+// 重置密码
+Mock.mock(/\/api\/user\/reset-password\//, 'post', (options: any) => {
+  const id = options.url.split('/').pop()
+  const { password } = JSON.parse(options.body)
+  const list = getList<User>(KEYS.USERS)
+  const index = list.findIndex(u => u.id === id)
+  
+  if (index > -1) {
+    list[index].password = password
+    saveList(KEYS.USERS, list)
+    return { code: 200, data: null, message: '密码重置成功' }
+  }
+  
+  return { code: 404, data: null, message: '用户不存在' }
+})

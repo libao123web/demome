@@ -13,6 +13,8 @@ function removeModulePlugin(): Plugin {
         .replace(/<script type="module" crossorigin/g, '<script defer')
         .replace(/<script type="module"/g, '<script defer')
         .replace(/crossorigin /g, '')
+        // 移除 manifest.json 引用，避免 file:// 协议下的 CORS 错误
+        .replace(/<link rel="manifest"[^>]*>\n?\s*/g, '')
       return result
     }
   }

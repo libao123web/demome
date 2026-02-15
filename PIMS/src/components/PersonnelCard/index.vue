@@ -19,7 +19,7 @@
       type="primary" 
       size="small" 
       class="similar-btn"
-      @click="handleSimilarClick"
+      @click.stop="handleSimilarClick"
     >
       相似人员
     </a-button>
@@ -55,6 +55,10 @@ const handleSimilarClick = () => {
   transition: all 0.3s;
   cursor: pointer;
   
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+  
   &:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     transform: translateY(-4px);
@@ -62,6 +66,16 @@ const handleSimilarClick = () => {
   
   .card-photo {
     margin-bottom: 12px;
+    
+    @media (max-width: 768px) {
+      margin-bottom: 8px;
+      
+      :deep(.ant-avatar) {
+        width: 60px !important;
+        height: 60px !important;
+        line-height: 60px !important;
+      }
+    }
   }
   
   .card-name {
@@ -69,6 +83,11 @@ const handleSimilarClick = () => {
     font-weight: 500;
     color: rgba(0, 0, 0, 0.85);
     margin-bottom: 8px;
+    
+    @media (max-width: 768px) {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
   }
   
   .card-info {
@@ -76,13 +95,26 @@ const handleSimilarClick = () => {
     color: rgba(0, 0, 0, 0.45);
     margin-bottom: 12px;
     
+    @media (max-width: 768px) {
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+    
     .info-item {
       margin: 4px 0;
+      
+      @media (max-width: 768px) {
+        margin: 2px 0;
+      }
     }
   }
   
   .similar-btn {
     width: 100%;
+    
+    @media (max-width: 768px) {
+      font-size: 12px;
+    }
   }
 }
 </style>

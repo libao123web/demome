@@ -2,7 +2,7 @@
   <div class="personnel-position">
     <a-row :gutter="16">
       <!-- 左侧：组织树 -->
-      <a-col :xs="24" :sm="24" :md="6" :lg="5">
+      <a-col :xs="24" :sm="24" :md="8" :lg="6" :xl="5">
         <a-card class="org-tree-card" :bodyStyle="{ padding: '12px' }">
           <a-input-search 
             v-model:value="searchKeyword" 
@@ -36,7 +36,7 @@
       </a-col>
 
       <!-- 右侧：人员卡片 -->
-      <a-col :xs="24" :sm="24" :md="18" :lg="19">
+      <a-col :xs="24" :sm="24" :md="16" :lg="18" :xl="19">
         <a-card :bodyStyle="{ padding: '16px' }">
           <!-- 搜索栏 -->
           <a-form layout="inline" class="search-form mb-4">
@@ -57,6 +57,9 @@
               <a-space>
                 <a-button type="primary" @click="handleSearch">查询</a-button>
                 <a-button @click="handleReset">重置</a-button>
+                <a-button type="primary" @click="openAddPosition" :disabled="!selectedKeys.length">
+                  <PlusOutlined /> 添加人员
+                </a-button>
               </a-space>
             </a-form-item>
           </a-form>
@@ -114,13 +117,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { message, Empty } from 'ant-design-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import { organizationApi, tagApi, positionTagApi } from '@/api'
 import type { Organization, OrganizationMember, Tag, Personnel, PositionTag } from '@/types'
 import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 // 组织树
 const treeData = ref<Organization[]>([])
@@ -208,12 +213,37 @@ const openPersonnelDetail = (member: OrganizationMember) => {
   detailVisible.value = true
 }
 
+// 查找组织
+const findOrgById = (orgs: Organization[], id: string): Organization | null => {
+  for (const org of orgs) {
+    if (org.id === id) return org
+    if (org.children) {
+      const found = findOrgById(org.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 // 加载组织树
 const loadTree = async () => {
   treeLoading.value = true
   try {
     const res = await organizationApi.getTree()
     treeData.value = res || []
+    
+    // 检查路由参数，如果有orgId则选中指定组织
+    const routeOrgId = route.query.orgId as string
+    if (routeOrgId && res?.length) {
+      const targetOrg = findOrgById(res, routeOrgId)
+      if (targetOrg) {
+        selectedKeys.value = [routeOrgId]
+        currentOrg.value = targetOrg
+        loadMembers(routeOrgId)
+        return
+      }
+    }
+    
     // 默认选中第一个
     if (res?.length) {
       const firstChild = res[0].children?.[0]
@@ -320,6 +350,22 @@ const openTransfer = (member: OrganizationMember) => {
     }
   })
 }
+
+// 打开添加人员到当前组织
+const openAddPosition = () => {
+  if (!selectedKeys.value.length) {
+    message.warning('请先选择一个组织')
+    return
+  }
+  // 跳转到更换人员页面，传递mode=add表示添加模式
+  router.push({
+    path: '/position/transfer',
+    query: {
+      mode: 'add',
+      orgId: selectedKeys.value[0]
+    }
+  })
+}
 </script>
 
 <style scoped lang="less">
@@ -328,21 +374,61 @@ const openTransfer = (member: OrganizationMember) => {
     height: calc(100vh - 180px);
     overflow: hidden;
     
+    @media (max-width: 768px) {
+      height: auto;
+      max-height: 300px;
+      margin-bottom: 16px;
+    }
+    
     .org-tree-wrapper {
       height: calc(100vh - 280px);
       overflow-y: auto;
+      
+      @media (max-width: 768px) {
+        height: auto;
+        max-height: 200px;
+      }
     }
   }
   
   .search-form {
     flex-wrap: wrap;
     gap: 8px;
+    
+    @media (max-width: 768px) {
+      :deep(.ant-form-item) {
+        margin-bottom: 8px;
+        
+        .ant-input, .ant-select {
+          width: 100% !important;
+        }
+      }
+      
+      :deep(.ant-space) {
+        flex-wrap: wrap;
+        width: 100%;
+        
+        .ant-btn {
+          flex: 1;
+          min-width: 80px;
+        }
+      }
+    }
   }
   
   .member-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 16px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
     
     .member-card {
       position: relative;
@@ -351,6 +437,11 @@ const openTransfer = (member: OrganizationMember) => {
       padding: 16px;
       text-align: center;
       transition: all 0.3s;
+      cursor: pointer;
+      
+      @media (max-width: 768px) {
+        padding: 12px;
+      }
       
       &:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -366,19 +457,45 @@ const openTransfer = (member: OrganizationMember) => {
         padding: 2px 12px;
         font-size: 12px;
         border-radius: 8px 0 8px 0;
+        
+        @media (max-width: 768px) {
+          padding: 2px 8px;
+          font-size: 10px;
+        }
       }
       
       .card-content {
         padding: 16px 0;
         
+        @media (max-width: 768px) {
+          padding: 12px 0;
+        }
+        
         .member-avatar {
           background: linear-gradient(135deg, #1890ff, #096dd9);
+          
+          @media (max-width: 768px) {
+            width: 48px !important;
+            height: 48px !important;
+            line-height: 48px !important;
+          }
         }
         
         .member-name {
           margin-top: 8px;
           font-size: 16px;
           font-weight: 500;
+          
+          @media (max-width: 768px) {
+            font-size: 14px;
+          }
+        }
+      }
+      
+      :deep(.ant-btn) {
+        @media (max-width: 768px) {
+          font-size: 12px;
+          padding: 0 8px;
         }
       }
     }
@@ -387,6 +504,16 @@ const openTransfer = (member: OrganizationMember) => {
   .pagination-wrapper {
     margin-top: 16px;
     text-align: right;
+    
+    @media (max-width: 768px) {
+      text-align: center;
+      
+      :deep(.ant-pagination) {
+        .ant-pagination-options {
+          display: none;
+        }
+      }
+    }
   }
 }
 </style>

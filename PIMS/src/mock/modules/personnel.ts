@@ -9,14 +9,38 @@ Mock.mock(/\/api\/personnel\/list/, 'get', (options: any) => {
   const pageSize = parseInt(params.get('pageSize') || '10')
   const name = params.get('name') || ''
   const idCard = params.get('idCard') || ''
+  const phone = params.get('phone') || ''
+  const gender = params.get('gender') || ''
   const categoryId = params.get('categoryId') || ''
+  const categoryIds = params.get('categoryIds') || '' // 支持数组形式
+  const tagIds = params.get('tagIds') || '' // 支持数组形式
   
   let list = getList<Personnel>(KEYS.PERSONNEL)
   
-  // 过滤
+  // 过滤姓名
   if (name) list = list.filter(p => p.name.includes(name))
+  // 过滤身份证
   if (idCard) list = list.filter(p => p.idCard.includes(idCard))
+  // 过滤手机号
+  if (phone) list = list.filter(p => p.phone?.includes(phone))
+  // 过滤性别
+  if (gender) list = list.filter(p => p.gender === gender)
+  // 过滤分类（单个）
   if (categoryId) list = list.filter(p => p.categoryId === categoryId)
+  // 过滤分类（数组）
+  if (categoryIds) {
+    const catIdArr = categoryIds.split(',')
+    if (catIdArr.length > 0 && catIdArr[0]) {
+      list = list.filter(p => catIdArr.includes(p.categoryId || ''))
+    }
+  }
+  // 过滤标签（数组）
+  if (tagIds) {
+    const tagIdArr = tagIds.split(',')
+    if (tagIdArr.length > 0 && tagIdArr[0]) {
+      list = list.filter(p => p.tags?.some(t => tagIdArr.includes(t.id)))
+    }
+  }
   
   const total = list.length
   const start = (page - 1) * pageSize

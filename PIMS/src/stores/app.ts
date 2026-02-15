@@ -8,8 +8,8 @@ export const useAppStore = defineStore('app', () => {
   // 移动端侧边栏显示状态
   const siderVisible = ref(false)
   
-  // 是否移动端
-  const isMobile = ref(window.innerWidth < 768)
+  // 是否移动端（包括平板）
+  const isMobile = ref(window.innerWidth < 992)
 
   // 切换折叠状态
   function toggleCollapsed() {

@@ -13,6 +13,8 @@
       mode="inline"
       theme="light"
       :inline-collapsed="!appStore.isMobile && appStore.collapsed"
+      :triggerSubMenuAction="appStore.collapsed ? 'click' : 'hover'"
+      :getPopupContainer="getPopupContainer"
       @click="handleMenuClick"
     >
       <!-- 有子菜单 -->
@@ -55,6 +57,9 @@ const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
 const userStore = useUserStore()
+
+// 获取弹出层挂载容器，确保子菜单弹出层挂载到body上
+const getPopupContainer = () => document.body
 
 // 图标组件映射
 const iconMap: Record<string, any> = {
@@ -178,6 +183,10 @@ const handleMenuClick = ({ key }: { key: string }) => {
     // 移动端点击后关闭抽屉
     if (appStore.isMobile) {
       appStore.closeSider()
+    }
+    // 收起状态下点击后关闭子菜单弹窗
+    if (appStore.collapsed) {
+      openKeys.value = []
     }
   }
 }

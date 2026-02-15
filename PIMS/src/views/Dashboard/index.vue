@@ -170,8 +170,7 @@ import {
   TagsOutlined,
   UserOutlined,
   PlusOutlined,
-  SearchOutlined,
-  SettingOutlined
+  SearchOutlined
 } from '@ant-design/icons-vue'
 import { personnelApi, categoryApi, tagApi, userApi } from '@/api'
 import type { Personnel, Category, Tag } from '@/types'
@@ -202,8 +201,7 @@ const quickEntries = [
   { name: '人员检索', path: '/search', icon: markRaw(SearchOutlined), color: '#52c41a' },
   { name: '标签管理', path: '/personnel/tags', icon: markRaw(TagsOutlined), color: '#faad14' },
   { name: '分类管理', path: '/personnel/category', icon: markRaw(FolderOutlined), color: '#722ed1' },
-  { name: '用户管理', path: '/user', icon: markRaw(UserOutlined), color: '#eb2f96' },
-  { name: '系统设置', path: '/role', icon: markRaw(SettingOutlined), color: '#13c2c2' }
+  { name: '用户管理', path: '/user', icon: markRaw(UserOutlined), color: '#eb2f96' }
 ]
 
 // 颜色列表

@@ -1,5 +1,13 @@
 <template>
   <div class="transfer-personnel">
+    <!-- 页面头部：返回按钮 -->
+    <div class="page-header mb-4">
+      <a-button @click="goBack">
+        <LeftOutlined /> 返回人员岗位
+      </a-button>
+      <span class="page-title">{{ isAddMode ? '添加人员' : '更换人员' }}</span>
+    </div>
+
     <!-- 当前待更换人员提示 -->
     <a-alert
       v-if="currentTransferMember"
@@ -15,6 +23,23 @@
           <div>
             <div class="font-medium">当前待更换人员：{{ currentTransferMember.personnel?.name }}</div>
             <div class="text-gray-500 text-sm">请在下方选择替换人员后点击"更换"按钮进行更换</div>
+          </div>
+        </div>
+      </template>
+    </a-alert>
+
+    <!-- 添加人员模式提示 -->
+    <a-alert
+      v-if="isAddMode"
+      class="mb-4"
+      type="success"
+      show-icon
+    >
+      <template #message>
+        <div class="flex items-center gap-3">
+          <div>
+            <div class="font-medium">添加人员到组织</div>
+            <div class="text-gray-500 text-sm">请在下方选择要添加的人员后点击"添加"按钮</div>
           </div>
         </div>
       </template>
@@ -59,10 +84,10 @@
       </a-spin>
     </a-card>
 
-    <!-- 其他人员区域 -->
+    <!-- 人员列表区域 -->
     <a-card class="member-list-card" :bodyStyle="{ padding: '16px' }">
       <template #title>
-        <span class="text-blue-500 font-medium">其他人员</span>
+        <span class="text-blue-500 font-medium">人员列表</span>
       </template>
 
       <!-- 搜索栏 -->
@@ -138,9 +163,9 @@
             :disabled="!canTransfer" 
             @click="handleReplacementTransfer"
           >
-            {{ currentTransferMember ? '确认更换' : '更换' }}
+            {{ isAddMode ? '确认添加' : (currentTransferMember ? '确认更换' : '更换') }}
           </a-button>
-          <a-button @click="handleCancel">{{ currentTransferMember ? '返回' : '取消' }}</a-button>
+          <a-button @click="handleCancel">{{ (currentTransferMember || isAddMode) ? '返回' : '取消' }}</a-button>
         </a-space>
       </div>
     </a-card>
@@ -201,6 +226,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Empty } from 'ant-design-vue'
+import { LeftOutlined } from '@ant-design/icons-vue'
 import { organizationApi, tagApi, categoryApi, positionTagApi } from '@/api'
 import type { Organization, OrganizationMember, Tag, Category, Personnel, PositionTag } from '@/types'
 import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
@@ -211,6 +237,8 @@ const router = useRouter()
 // 从其他页面跳转过来的当前成员信息
 const currentTransferMember = ref<OrganizationMember | null>(null)
 const currentSourceOrgId = ref<string>('')
+// 添加模式标记(从Members页面点击"添加人员"进入)
+const isAddMode = ref(false)
 
 // 推荐人员
 const recommendedList = ref<(Personnel & { matchScore: number })[]>([])
@@ -267,11 +295,15 @@ const totalSelected = computed(() => {
   return selectedRowKeys.value.length + selectedPersonnel.value.length
 })
 
-// 是否可以更换
+// 是否可以更换/添加
 const canTransfer = computed(() => {
   if (currentTransferMember.value) {
     // 替换模式：需要选择一个替换人员
     return selectedRowKeys.value.length === 1 || selectedPersonnel.value.length === 1
+  }
+  if (isAddMode.value) {
+    // 添加模式：需要至少选择一个人员
+    return selectedRowKeys.value.length > 0 || selectedPersonnel.value.length > 0
   }
   // 批量模式
   return selectedRowKeys.value.length > 0 || selectedPersonnel.value.length > 0
@@ -377,7 +409,7 @@ const loadCategories = async () => {
 const loadPositionTags = async () => {
   try {
     const res = await positionTagApi.getList()
-    positionTags.value = res.list || []
+    positionTags.value = res.data || []
   } catch (e) {
     console.error(e)
   }
@@ -385,7 +417,17 @@ const loadPositionTags = async () => {
 
 // 根据 URL 参数加载待更换的成员信息
 const loadTransferMemberFromQuery = async () => {
-  const { memberId, orgId } = route.query
+  const { memberId, orgId, mode } = route.query
+  
+  // 添加模式：从Members页面点击"添加人员"进入
+  if (mode === 'add' && orgId) {
+    isAddMode.value = true
+    currentSourceOrgId.value = orgId as string
+    message.info('请选择要添加到组织的人员')
+    return
+  }
+  
+  // 更换模式：从Members页面点击"更换人员"进入
   if (memberId && orgId) {
     currentSourceOrgId.value = orgId as string
     try {
@@ -487,11 +529,24 @@ const getTargetOrgPositionTag = () => {
   return org?.positionTagId ? getPositionTagName(org.positionTagId) : ''
 }
 
+// 返回人员岗位页面（带上原组织ID）
+const goBack = () => {
+  if (currentSourceOrgId.value) {
+    router.push({ path: '/position/members', query: { orgId: currentSourceOrgId.value } })
+  } else {
+    router.push('/position/members')
+  }
+}
+
 // 取消/返回
 const handleCancel = () => {
-  if (currentTransferMember.value) {
-    // 替换模式，返回人员岗位页面
-    router.push('/position/members')
+  if (currentTransferMember.value || isAddMode.value) {
+    // 替换模式或添加模式，返回人员岗位页面（带上原组织ID）
+    if (currentSourceOrgId.value) {
+      router.push({ path: '/position/members', query: { orgId: currentSourceOrgId.value } })
+    } else {
+      router.push('/position/members')
+    }
   } else {
     // 普通模式，清空选择
     selectedRowKeys.value = []
@@ -502,6 +557,55 @@ const handleCancel = () => {
 // 替换更换 - 用选中的人员替换当前待更换人员
 const handleReplacementTransfer = async () => {
   if (!canTransfer.value) return
+  
+  // 添加模式：将选中的人员添加到目标组织
+  if (isAddMode.value && currentSourceOrgId.value) {
+    let personnelIdsToAdd: string[] = []
+    
+    // 获取选中的人员ID
+    if (selectedRowKeys.value.length > 0) {
+      personnelIdsToAdd = selectedRowKeys.value.map(id => {
+        const member = members.value.find(m => m.id === id)
+        return member?.personnelId || ''
+      }).filter(Boolean)
+    }
+    
+    if (selectedPersonnel.value.length > 0) {
+      personnelIdsToAdd = [...personnelIdsToAdd, ...selectedPersonnel.value]
+    }
+    
+    if (personnelIdsToAdd.length === 0) {
+      message.warning('请选择要添加的人员')
+      return
+    }
+    
+    transferLoading.value = true
+    try {
+      // 将人员添加到目标组织
+      for (const personnelId of personnelIdsToAdd) {
+        // 检查该人员是否已在目标组织中
+        const existingMember = members.value.find(
+          m => m.personnelId === personnelId && m.organizationId === currentSourceOrgId.value
+        )
+        if (existingMember) {
+          continue // 跳过已存在的人员
+        }
+        
+        await organizationApi.addMember({
+          organizationId: currentSourceOrgId.value,
+          personnelId: personnelId
+        })
+      }
+      
+      message.success(`成功添加 ${personnelIdsToAdd.length} 名人员到组织`)
+      router.push({ path: '/position/members', query: { orgId: currentSourceOrgId.value } })
+    } catch (e) {
+      message.error('添加失败')
+    } finally {
+      transferLoading.value = false
+    }
+    return
+  }
   
   if (currentTransferMember.value) {
     // 替换模式：将选中的人员替换到当前成员的组织，原人员退出成为自由人
@@ -531,8 +635,8 @@ const handleReplacementTransfer = async () => {
       })
       
       message.success('更换成功，原人员已退出组织')
-      // 返回人员岗位页面
-      router.push('/position/members')
+      // 返回人员岗位页面（带上原组织ID）
+      router.push({ path: '/position/members', query: { orgId: currentSourceOrgId.value } })
     } catch (e) {
       message.error('更换失败')
     } finally {
@@ -590,12 +694,30 @@ const handleTransfer = async () => {
 
 <style scoped lang="less">
 .transfer-personnel {
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    
+    .page-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+
   .recommend-card {
     .recommend-list {
       display: flex;
       gap: 16px;
       overflow-x: auto;
       padding-bottom: 8px;
+      
+      @media (max-width: 768px) {
+        gap: 12px;
+      }
       
       .recommend-card-item {
         flex-shrink: 0;
@@ -607,6 +729,11 @@ const handleTransfer = async () => {
         cursor: pointer;
         transition: all 0.3s;
         position: relative;
+        
+        @media (max-width: 768px) {
+          width: 140px;
+          padding: 10px;
+        }
         
         &:hover {
           border-color: #1890ff;
@@ -635,6 +762,10 @@ const handleTransfer = async () => {
           margin: 8px 0;
           font-size: 16px;
           font-weight: 500;
+          
+          @media (max-width: 768px) {
+            font-size: 14px;
+          }
         }
         
         .ability-tags {
@@ -657,6 +788,12 @@ const handleTransfer = async () => {
     .search-form {
       flex-wrap: wrap;
       gap: 8px;
+      
+      @media (max-width: 768px) {
+        :deep(.ant-form-item) {
+          margin-bottom: 8px;
+        }
+      }
     }
     
     .footer-actions {

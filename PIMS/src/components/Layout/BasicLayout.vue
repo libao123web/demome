@@ -19,7 +19,7 @@
       v-model:collapsed="appStore.collapsed"
       :trigger="null"
       collapsible
-      :width="256"
+      :width="236"
       :collapsedWidth="80"
       theme="light"
       class="sider-container"
@@ -62,7 +62,7 @@ const appStore = useAppStore()
 
 // 监听窗口大小变化
 const handleResize = () => {
-  appStore.updateMobile(window.innerWidth < 768)
+  appStore.updateMobile(window.innerWidth < 992)
 }
 
 onMounted(() => {
@@ -106,7 +106,7 @@ onUnmounted(() => {
     margin-left: 80px;
   }
   
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     margin-left: 0;
   }
 }
@@ -121,13 +121,13 @@ onUnmounted(() => {
     margin-left: 80px;
   }
   
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     margin-left: 0;
   }
 }
 
 .page-wrapper {
-  padding: 24px 24px 0;
+  padding: 16px 16px 0;
   
   @media (max-width: 768px) {
     padding: 12px 12px 0;

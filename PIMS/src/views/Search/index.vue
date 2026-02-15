@@ -122,7 +122,7 @@
           </div>
           
           <!-- 推荐相似人员区域 -->
-          <a-card v-if="recommendedList.length > 0" class="recommend-card mb-4" :bodyStyle="{ padding: '16px' }">
+          <a-card v-if="showRecommended && recommendedList.length > 0" class="recommend-card mb-4" :bodyStyle="{ padding: '16px' }">
             <template #title>
               <span class="text-blue-500 font-medium">推荐相似人员</span>
             </template>
@@ -131,21 +131,25 @@
                 v-for="person in recommendedList" 
                 :key="person.id" 
                 class="recommend-card-item"
-                @click="handleRecommendClick(person)"
               >
                 <div class="match-score">{{ person.matchScore }}%匹配</div>
-                <a-avatar :src="person.photo || undefined" :size="80" shape="square" class="person-avatar">
-                  {{ person.name?.charAt(0) }}
-                </a-avatar>
-                <div class="person-name">{{ person.name }}</div>
-                <div class="ability-tags">
-                  <a-tag v-if="person.ability?.leadershipAbility" color="blue">
-                    领导能力 {{ person.ability.leadershipAbility }}
-                  </a-tag>
-                  <a-tag v-if="person.ability?.teamworkAbility" color="cyan">
-                    团队合作 {{ person.ability.teamworkAbility }}
-                  </a-tag>
+                <div class="card-clickable" @click="handleRecommendClick(person)">
+                  <a-avatar :src="person.photo || undefined" :size="80" shape="square" class="person-avatar">
+                    {{ person.name?.charAt(0) }}
+                  </a-avatar>
+                  <div class="person-name">{{ person.name }}</div>
+                  <div class="ability-tags">
+                    <a-tag v-if="person.ability?.leadershipAbility" color="blue">
+                      领导能力 {{ person.ability.leadershipAbility }}
+                    </a-tag>
+                    <a-tag v-if="person.ability?.teamworkAbility" color="cyan">
+                      团队合作 {{ person.ability.teamworkAbility }}
+                    </a-tag>
+                  </div>
                 </div>
+                <a-button type="link" size="small" class="similar-btn" @click.stop="handleRecommendSimilarClick(person)">
+                  查看相似人员
+                </a-button>
               </div>
             </div>
           </a-card>
@@ -157,6 +161,7 @@
                   v-for="item in dataSource"
                   :key="item.id"
                   :personnel="item"
+                  @click="handleCardClick(item)"
                   @similar-click="handleSimilarClick"
                 />
               </div>
@@ -184,16 +189,23 @@
       v-model:open="similarDrawerVisible"
       :personnel="currentPersonnel"
     />
+
+    <!-- 人员详情抽屉 -->
+    <PersonnelDetailDrawer
+      v-model:open="detailDrawerVisible"
+      :personnel="detailPersonnel"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { personnelApi, categoryApi, tagApi } from '@/api'
 import type { Personnel, Category, Tag } from '@/types'
 import PersonnelCard from '@/components/PersonnelCard/index.vue'
 import SimilarPersonnelDrawer from '@/components/SimilarPersonnelDrawer/index.vue'
+import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
 
 // 搜索模式
 const searchMode = ref<'initial' | 'results'>('initial')
@@ -236,11 +248,15 @@ const activeFilterKeys = ref(['info', 'category', 'advanced'])
 const similarDrawerVisible = ref(false)
 const currentPersonnel = ref<Personnel | null>(null)
 
+// 人员详情
+const detailDrawerVisible = ref(false)
+const detailPersonnel = ref<Personnel | null>(null)
+
 // 加载推荐相似人员
 const loadRecommended = async () => {
   try {
     const res = await personnelApi.getList({ page: 1, pageSize: 50 })
-    // 筛选能力较强的人员作为推荐
+    // 筛选能力较强的人员作为推荐，限制为4个以避免挤压左侧搜索条件
     const allPersonnel = res.data || []
     recommendedList.value = allPersonnel
       .filter(p => p.ability)
@@ -249,7 +265,7 @@ const loadRecommended = async () => {
         const bScore = Object.values(b.ability || {}).reduce((sum: number, v: any) => sum + (v || 0), 0)
         return bScore - aScore
       })
-      .slice(0, 6)
+      .slice(0, 4)
       .map(p => ({
         ...p,
         matchScore: Math.floor(70 + Math.random() * 30) // 70-100的匹配度
@@ -261,8 +277,14 @@ const loadRecommended = async () => {
 
 // 点击推荐人员
 const handleRecommendClick = (person: Personnel) => {
-  currentPersonnel.value = person
-  similarDrawerVisible.value = true
+  detailPersonnel.value = person
+  detailDrawerVisible.value = true
+}
+
+// 点击人员卡片查看详情
+const handleCardClick = (person: Personnel) => {
+  detailPersonnel.value = person
+  detailDrawerVisible.value = true
 }
 
 // 加载基础数据
@@ -281,18 +303,20 @@ const loadBaseData = async () => {
 
 // 快速搜索
 const handleQuickSearch = () => {
-  if (!quickSearch.value.trim()) return
-  
-  // 判断输入类型并填充到对应字段
   const value = quickSearch.value.trim()
-  if (/^1[3-9]\d{9}$/.test(value)) {
-    searchParams.phone = value
-  } else if (/^\d{15}$|^\d{18}$|^\d{17}(\d|X|x)$/.test(value)) {
-    searchParams.idCard = value
-  } else {
-    searchParams.name = value
+  
+  // 如果有输入，判断输入类型并填充到对应字段
+  if (value) {
+    if (/^1[3-9]\d{9}$/.test(value)) {
+      searchParams.phone = value
+    } else if (/^\d{15}$|^\d{18}$|^\d{17}(\d|X|x)$/.test(value)) {
+      searchParams.idCard = value
+    } else {
+      searchParams.name = value
+    }
   }
   
+  // 无论是否有输入都执行搜索（空条件返回全部）
   handleSearch()
 }
 
@@ -300,11 +324,18 @@ const handleQuickSearch = () => {
 const handleSearch = async () => {
   loading.value = true
   try {
-    const res = await personnelApi.getList({
-      ...searchParams,
+    // 将数组转换为逗号分隔的字符串，以便mock正确解析
+    const params: Record<string, any> = {
+      name: searchParams.name,
+      idCard: searchParams.idCard,
+      phone: searchParams.phone,
+      gender: searchParams.gender,
+      categoryIds: searchParams.categoryIds.join(','),
+      tagIds: searchParams.tagIds.join(','),
       page: pagination.current,
       pageSize: pagination.pageSize
-    })
+    }
+    const res = await personnelApi.getList(params)
     dataSource.value = res.data
     total.value = res.total
     pagination.total = res.total
@@ -346,6 +377,24 @@ const handleSimilarClick = (personnel: Personnel) => {
   similarDrawerVisible.value = true
 }
 
+// 推荐人员查看相似人员（只打开相似抽屉，不打开详情）
+const handleRecommendSimilarClick = (personnel: Personnel) => {
+  currentPersonnel.value = personnel
+  similarDrawerVisible.value = true
+}
+
+// 是否显示推荐人员（有搜索条件时显示）
+const showRecommended = computed(() => {
+  return !!(
+    searchParams.name ||
+    searchParams.idCard ||
+    searchParams.phone ||
+    searchParams.gender ||
+    searchParams.categoryIds.length > 0 ||
+    searchParams.tagIds.length > 0
+  )
+})
+
 onMounted(() => {
   loadBaseData()
   loadRecommended()
@@ -368,14 +417,26 @@ onMounted(() => {
   padding: 40px 20px;
   overflow: hidden;
   
+  @media (max-width: 768px) {
+    padding: 20px 12px;
+  }
+  
   .search-header {
     text-align: center;
     margin-bottom: 40px;
+    
+    @media (max-width: 768px) {
+      margin-bottom: 24px;
+    }
     
     .search-icon {
       font-size: 64px;
       color: #1890ff;
       margin-bottom: 16px;
+      
+      @media (max-width: 768px) {
+        font-size: 48px;
+      }
     }
     
     .search-title {
@@ -383,6 +444,10 @@ onMounted(() => {
       font-weight: 500;
       color: rgba(0, 0, 0, 0.85);
       margin: 0;
+      
+      @media (max-width: 768px) {
+        font-size: 24px;
+      }
     }
   }
   
@@ -393,6 +458,10 @@ onMounted(() => {
     
     .quick-search-input {
       margin-bottom: 32px;
+      
+      @media (max-width: 768px) {
+        margin-bottom: 16px;
+      }
       
       :deep(.ant-input) {
         padding-right: 80px;
@@ -409,21 +478,39 @@ onMounted(() => {
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       
+      @media (max-width: 768px) {
+        padding: 16px;
+      }
+      
       .form-item-wrapper {
         display: flex;
         align-items: center;
         gap: 8px;
+        
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: flex-start;
+        }
         
         .form-label {
           flex-shrink: 0;
           width: 48px;
           color: rgba(0, 0, 0, 0.85);
           font-size: 14px;
+          
+          @media (max-width: 768px) {
+            width: auto;
+            margin-bottom: 4px;
+          }
         }
         
         .ant-input,
         .ant-select {
           flex: 1;
+          
+          @media (max-width: 768px) {
+            width: 100% !important;
+          }
         }
       }
     }
@@ -431,37 +518,118 @@ onMounted(() => {
 }
 
 .search-results {
+  height: 100%;
+  overflow: hidden;
   
   .results-layout {
     display: flex;
+    height: 100%;
+    
+    // 平板和手机：上下布局
+    @media (max-width: 992px) {
+      flex-direction: column;
+      overflow-y: auto;
+    }
   }
   
   .filter-panel {
-    width: 320px;
+    width: 300px;
     background: #fff;
     border-right: 1px solid #f0f0f0;
-    transition: all 0.3s;
+    transition: width 0.3s ease;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     
+    // 桌面端收起状态：仅显示头部
     &.collapsed {
-      width: 60px;
+      width: 56px;
+      
+      .filter-header {
+        padding: 16px 8px;
+        justify-content: center;
+        
+        .filter-title {
+          display: none;
+        }
+        
+        .ant-btn {
+          padding: 4px 8px;
+          font-size: 12px;
+        }
+      }
+    }
+    
+    // 平板端（768-992px）
+    @media (max-width: 992px) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
+      
+      &.collapsed {
+        width: 100%;
+        
+        .filter-header {
+          padding: 12px 16px;
+          justify-content: flex-end;
+          
+          .filter-title {
+            display: none;
+          }
+          
+          .ant-btn {
+            padding: 4px 12px;
+            font-size: 14px;
+          }
+        }
+      }
+    }
+    
+    // 手机端（<768px）
+    @media (max-width: 768px) {
+      &.collapsed {
+        .filter-header {
+          padding: 10px 12px;
+        }
+      }
     }
     
     .filter-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
+      padding: 8px 16px;
       border-bottom: 1px solid #f0f0f0;
       flex-shrink: 0;
       
+      @media (max-width: 768px) {
+        padding: 12px;
+      }
+      
       .filter-title {
         font-weight: 500;
+        white-space: nowrap;
       }
     }
     
     .filter-content {
       padding: 16px;
       padding-top: 6px;
+      flex: 1;
+      overflow-y: auto;
+      
+      // 平板端限制最大高度
+      @media (max-width: 992px) {
+        max-height: 280px;
+        flex: none;
+      }
+      
+      @media (max-width: 768px) {
+        padding: 12px;
+        max-height: 240px;
+      }
       
       :deep(.ant-collapse) {
         background: transparent;
@@ -476,6 +644,10 @@ onMounted(() => {
         .ant-form-item {
           margin-bottom: 16px;
           
+          @media (max-width: 768px) {
+            margin-bottom: 12px;
+          }
+          
           &:last-child {
             margin-bottom: 0;
           }
@@ -484,13 +656,35 @@ onMounted(() => {
       
       .filter-actions {
         margin-top: 16px;
+        
+        @media (max-width: 992px) {
+          display: flex;
+          gap: 8px;
+          
+          .ant-btn {
+            flex: 1;
+            margin-top: 0 !important;
+          }
+        }
       }
     }
   }
   
   .results-content {
     flex: 1;
-    padding: 24px;
+    padding: 16px 24px;
+    min-width: 0;
+    overflow-y: auto;
+    
+    @media (max-width: 992px) {
+      padding: 16px;
+      flex: 1;
+      overflow-y: visible;
+    }
+    
+    @media (max-width: 768px) {
+      padding: 12px;
+    }
     
     .results-header {
       display: flex;
@@ -498,20 +692,53 @@ onMounted(() => {
       align-items: center;
       margin-bottom: 24px;
       
+      @media (max-width: 992px) {
+        margin-bottom: 16px;
+      }
+      
+      @media (max-width: 768px) {
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
       .results-count {
         font-size: 16px;
         font-weight: 500;
+        
+        @media (max-width: 768px) {
+          font-size: 14px;
+        }
       }
     }
     
     .recommend-card {
       margin-bottom: 24px;
       
+      @media (max-width: 992px) {
+        margin-bottom: 16px;
+      }
+      
+      @media (max-width: 768px) {
+        margin-bottom: 12px;
+      }
+      
       .recommend-list {
         display: flex;
         gap: 16px;
         overflow-x: auto;
         padding-bottom: 8px;
+        
+        // 平板端横向滚动优化
+        @media (max-width: 992px) {
+          gap: 12px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: thin;
+        }
+        
+        @media (max-width: 768px) {
+          gap: 10px;
+        }
         
         .recommend-card-item {
           flex-shrink: 0;
@@ -523,6 +750,16 @@ onMounted(() => {
           cursor: pointer;
           transition: all 0.3s;
           position: relative;
+          
+          @media (max-width: 992px) {
+            width: 140px;
+            padding: 10px;
+          }
+          
+          @media (max-width: 768px) {
+            width: 120px;
+            padding: 8px;
+          }
           
           &:hover {
             border-color: #1890ff;
@@ -537,16 +774,46 @@ onMounted(() => {
             font-weight: bold;
             font-size: 12px;
             z-index: 10;
+            
+            @media (max-width: 768px) {
+              font-size: 11px;
+            }
+          }
+          
+          .card-clickable {
+            cursor: pointer;
           }
           
           .person-avatar {
             background: linear-gradient(135deg, #1890ff, #096dd9);
+            
+            @media (max-width: 992px) {
+              width: 64px !important;
+              height: 64px !important;
+              line-height: 64px !important;
+            }
+            
+            @media (max-width: 768px) {
+              width: 56px !important;
+              height: 56px !important;
+              line-height: 56px !important;
+            }
           }
           
           .person-name {
             margin: 8px 0;
             font-size: 16px;
             font-weight: 500;
+            
+            @media (max-width: 992px) {
+              font-size: 14px;
+              margin: 6px 0;
+            }
+            
+            @media (max-width: 768px) {
+              font-size: 13px;
+              margin: 4px 0;
+            }
           }
           
           .ability-tags {
@@ -560,6 +827,21 @@ onMounted(() => {
               font-size: 10px;
               padding: 0 4px;
             }
+            
+            @media (max-width: 768px) {
+              display: none;
+            }
+          }
+          
+          .similar-btn {
+            margin-top: 8px;
+            padding: 0;
+            font-size: 12px;
+            
+            @media (max-width: 768px) {
+              margin-top: 4px;
+              font-size: 11px;
+            }
           }
         }
       }
@@ -568,10 +850,36 @@ onMounted(() => {
     .results-grid {
       margin-bottom: 24px;
       
+      @media (max-width: 992px) {
+        margin-bottom: 16px;
+      }
+      
+      @media (max-width: 768px) {
+        margin-bottom: 12px;
+      }
+      
       .grid-wrapper {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 16px;
+        
+        // 平板端：3列或2列
+        @media (max-width: 992px) {
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 12px;
+        }
+        
+        // 手机端大屏：2列
+        @media (max-width: 768px) {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        
+        // 手机端小屏：1列
+        @media (max-width: 480px) {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
       }
     }
     
@@ -579,6 +887,18 @@ onMounted(() => {
       display: flex;
       justify-content: center;
       padding: 16px 0;
+      
+      @media (max-width: 992px) {
+        padding: 12px 0;
+      }
+      
+      @media (max-width: 768px) {
+        :deep(.ant-pagination) {
+          .ant-pagination-options {
+            display: none;
+          }
+        }
+      }
     }
   }
 }

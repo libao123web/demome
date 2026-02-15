@@ -51,6 +51,9 @@
           <a-button @click="handleExport">
             <DownloadOutlined /> 导出
           </a-button>
+          <a-button @click="downloadTemplate">
+            <DownloadOutlined /> 下载模板
+          </a-button>
         </a-space>
       </div>
 
@@ -244,7 +247,7 @@ import {
 } from '@ant-design/icons-vue'
 import { personnelApi, tagApi, categoryApi, positionApi } from '@/api'
 import type { Personnel, Tag, Category } from '@/types'
-import { exportToExcel, importFromExcel, downloadTemplate as downloadTpl } from '@/utils/excel'
+import { exportToExcel, importFromExcel, downloadTemplate as downloadTpl, transformImportData, getPersonnelImportTemplate } from '@/utils/excel'
 import { useTable } from '@/composables/useTable'
 import { useForm } from '@/composables/useForm'
 import FormDrawer from '@/components/FormDrawer/index.vue'
@@ -420,28 +423,71 @@ const handleImport = () => {
 const confirmImport = async () => {
   if (!fileList.value.length) return message.warning('请选择文件')
   try {
-    const data = await importFromExcel<Personnel>(fileList.value[0])
-    for (const item of data) await personnelApi.create(item)
-    message.success(`成功导入 ${data.length} 条数据`)
+    // 获取原始文件对象（Ant Design Vue 的 UploadFile 对象中，原始 File 在 originFileObj 属性中）
+    const file = fileList.value[0].originFileObj || fileList.value[0]
+    if (!file) return message.warning('文件读取失败，请重新选择')
+    
+    // 导入原始数据并转换
+    const rawData = await importFromExcel<Record<string, any>>(file)
+    const transformedData = transformImportData(rawData)
+    
+    // 过滤掉没有必填字段的数据
+    const validData = transformedData.filter(item => item.name && item.idCard)
+    
+    if (validData.length === 0) {
+      return message.warning('未找到有效数据，请检查Excel文件格式是否正确')
+    }
+    
+    // 批量添加人员
+    let successCount = 0
+    let failCount = 0
+    for (const item of validData) {
+      try {
+        await personnelApi.create(item)
+        successCount++
+      } catch (e) {
+        failCount++
+        console.error('导入单条数据失败:', e)
+      }
+    }
+    
+    if (failCount > 0) {
+      message.warning(`成功导入 ${successCount} 条数据，${failCount} 条失败`)
+    } else {
+      message.success(`成功导入 ${successCount} 条数据`)
+    }
+    
     importVisible.value = false
     loadData()
   } catch (e) {
-    message.error('导入失败')
+    console.error('导入失败:', e)
+    message.error('导入失败，请检查文件格式')
   }
 }
 
 const handleExport = () => {
   if (!dataSource.value.length) return message.warning('暂无数据')
   const data = dataSource.value.map(item => ({
-    姓名: item.name, 身份证号: item.idCard, 性别: item.gender === 'male' ? '男' : '女',
-    出生日期: item.birthDate, 联系电话: item.phone, 现住址: item.address,
-    分类: getCategoryName(item.categoryId), 标签: item.tags?.map(t => t.name).join(','), 备注: item.remark
+    姓名: item.name, 
+    身份证号: item.idCard, 
+    性别: item.gender === 'male' ? '男' : '女',
+    手机号: item.phone,
+    出生日期: item.birthDate, 
+    民族: item.ethnicity,
+    籍贯: item.nativePlace,
+    政治面貌: item.politicalStatus,
+    学历: item.education,
+    现住址: item.address,
+    分类: getCategoryName(item.categoryId), 
+    标签: item.tags?.map(t => t.name).join(','), 
+    备注: item.remark
   }))
   exportToExcel(data, '人员信息')
 }
 
 const downloadTemplate = () => {
-  downloadTpl([{ 姓名: '张三', 身份证号: '110101199001011234', 性别: '男' }], '人员信息导入模板')
+  const templateData = getPersonnelImportTemplate()
+  downloadTpl(templateData, '人员信息导入模板')
 }
 </script>
 

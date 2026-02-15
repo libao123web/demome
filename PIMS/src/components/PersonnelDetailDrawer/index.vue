@@ -299,8 +299,42 @@ watch(visible, (val) => {
   }
 }
 
-// 响应式适配
+// 平板适配
 @media (max-width: 1200px) {
+  .personnel-detail {
+    .detail-content {
+      .detail-left {
+        width: 420px;
+        
+        .info-card {
+          .basic-info {
+            .info-row {
+              .label {
+                width: 90px;
+                font-size: 14px;
+              }
+              
+              .value {
+                font-size: 14px;
+              }
+            }
+          }
+        }
+      }
+      
+      .detail-right {
+        .ability-radar-card {
+          .radar-container {
+            min-height: 320px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 手机端适配 - 垂直布局
+@media (max-width: 768px) {
   .personnel-detail {
     .detail-content {
       flex-direction: column;
@@ -311,6 +345,12 @@ watch(visible, (val) => {
       
       .detail-right {
         width: 100%;
+        
+        .ability-radar-card {
+          .radar-container {
+            min-height: 300px;
+          }
+        }
       }
     }
   }

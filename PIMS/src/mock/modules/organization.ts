@@ -2,16 +2,23 @@ import Mock from 'mockjs'
 import { KEYS, getList, saveList, generateId, getCurrentTime } from '../utils'
 import type { Organization, OrganizationMember, Personnel } from '@/types'
 
-// 初始化组织架构数据
-function initOrganizationData() {
-  const existingOrgs = getList(KEYS.ORGANIZATIONS)
+// 数据初始化标志
+let isInitialized = false
+
+// 确保数据已初始化（惰性初始化，在第一次API调用时执行）
+function ensureDataInitialized() {
+  if (isInitialized) return
   
-  // 数据迁移：为旧数据添加 positionTagId
+  console.log('[Mock Organization] Initializing organization data...')
+  
+  const existingOrgs = getList<Organization>(KEYS.ORGANIZATIONS)
+  
+  // 初始化组织架构
   if (existingOrgs.length > 0) {
+    // 数据迁移：为旧数据添加 positionTagId
     const needsMigration = existingOrgs.some((org: Organization) => !org.hasOwnProperty('positionTagId'))
     
     if (needsMigration) {
-      // 迁移函数：为没有 positionTagId 的组织添加默认值
       const migrateOrgs = (orgs: Organization[]): Organization[] => {
         return orgs.map(org => {
           const migratedChildren = org.children ? migrateOrgs(org.children) : undefined
@@ -27,7 +34,7 @@ function initOrganizationData() {
       saveList(KEYS.ORGANIZATIONS, migratedOrgs)
     }
   } else {
-    // 首次初始化
+    // 首次初始化组织架构
     const organizations: Organization[] = [
       {
         id: '1',
@@ -35,7 +42,7 @@ function initOrganizationData() {
         code: 'org-a',
         parentId: '',
         sort: 1,
-        positionTagId: 'pt-4', // 经理
+        positionTagId: 'pt-4',
         memberCount: 40,
         createTime: getCurrentTime(),
         children: [
@@ -51,7 +58,7 @@ function initOrganizationData() {
         code: 'org-b',
         parentId: '',
         sort: 2,
-        positionTagId: 'pt-4', // 经理
+        positionTagId: 'pt-4',
         memberCount: 60,
         createTime: getCurrentTime(),
         children: [
@@ -65,16 +72,35 @@ function initOrganizationData() {
       }
     ]
     saveList(KEYS.ORGANIZATIONS, organizations)
+    console.log('[Mock Organization] Organizations initialized')
   }
 
   // 初始化组织成员数据
-  if (!getList(KEYS.ORG_MEMBERS).length) {
-    const personnel = getList<Personnel>(KEYS.PERSONNEL)
+  let existingMembers = getList(KEYS.ORG_MEMBERS)
+  const personnel = getList<Personnel>(KEYS.PERSONNEL)
+  const personnelIds = personnel.map(p => p.id)
+  
+  console.log('[Mock Organization] Personnel count:', personnel.length)
+  console.log('[Mock Organization] Existing members count:', existingMembers.length)
+  
+  // 验证现有成员数据中的 personnelId 是否有效
+  const hasInvalidRefs = existingMembers.length > 0 && existingMembers.some(
+    (m: OrganizationMember) => !personnelIds.includes(m.personnelId)
+  )
+  
+  // 需要重新初始化成员数据的条件
+  const needsReinit = 
+    (personnel.length > 0 && existingMembers.length === 0) || // 有人员但没有成员数据
+    hasInvalidRefs // 有无效的人员引用
+  
+  if (needsReinit) {
+    console.log('[Mock Organization] Re-initializing members due to:', 
+      hasInvalidRefs ? 'invalid refs' : 'no members but has personnel')
+    
     const members: OrganizationMember[] = []
     const positionNames = ['技术员', '工程师', '主管', '经理', '专员']
-    
-    // 为每个人员分配组织
     const orgIds = ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6']
+    
     personnel.forEach((p, index) => {
       members.push({
         id: generateId(),
@@ -86,10 +112,34 @@ function initOrganizationData() {
     })
     
     saveList(KEYS.ORG_MEMBERS, members)
+    console.log('[Mock Organization] Members initialized with', members.length, 'records')
+  } else if (existingMembers.length > 0 && personnel.length > existingMembers.length) {
+    // 有新增的人员没有入岗,将其入岗
+    const assignedPersonnelIds = existingMembers.map((m: OrganizationMember) => m.personnelId)
+    const unassignedPersonnel = personnel.filter(p => !assignedPersonnelIds.includes(p.id))
+    
+    if (unassignedPersonnel.length > 0) {
+      const positionNames = ['技术员', '工程师', '主管', '经理', '专员']
+      const orgIds = ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '2-4', '2-5', '2-6']
+      
+      unassignedPersonnel.forEach((p, index) => {
+        existingMembers.push({
+          id: generateId(),
+          organizationId: orgIds[index % orgIds.length],
+          personnelId: p.id,
+          positionName: positionNames[index % positionNames.length],
+          joinTime: getCurrentTime()
+        })
+      })
+      
+      saveList(KEYS.ORG_MEMBERS, existingMembers)
+      console.log('[Mock Organization] Added', unassignedPersonnel.length, 'new members')
+    }
   }
+  
+  isInitialized = true
+  console.log('[Mock Organization] Initialization completed')
 }
-
-initOrganizationData()
 
 // 计算组织的实际成员数量
 const calculateMemberCount = (orgId: string): number => {
@@ -108,6 +158,7 @@ const updateTreeMemberCount = (orgs: Organization[]): Organization[] => {
 
 // 获取组织树
 Mock.mock(/\/api\/organization\/tree/, 'get', () => {
+  ensureDataInitialized() // 确保数据已初始化
   const list = getList<Organization>(KEYS.ORGANIZATIONS)
   const updatedList = updateTreeMemberCount(list)
   return { code: 200, data: updatedList, message: 'success' }
@@ -191,6 +242,7 @@ Mock.mock(/\/api\/organization\/delete\//, 'delete', (options: any) => {
 
 // 获取组织下的人员
 Mock.mock(/\/api\/organization\/members\//, 'get', (options: any) => {
+  ensureDataInitialized() // 确保数据已初始化
   const organizationId = options.url.split('/').pop()
   const members = getList<OrganizationMember>(KEYS.ORG_MEMBERS)
   const personnel = getList<Personnel>(KEYS.PERSONNEL)
@@ -315,11 +367,12 @@ Mock.mock(/\/api\/organization\/member\/batch-transfer/, 'post', (options: any) 
 
 // 获取推荐人员（基于能力匹配）
 Mock.mock(/\/api\/organization\/recommended\//, 'get', () => {
+  ensureDataInitialized() // 确保数据已初始化
   const personnel = getList<Personnel>(KEYS.PERSONNEL)
   const members = getList<OrganizationMember>(KEYS.ORG_MEMBERS)
   const assignedIds = members.map(m => m.personnelId)
   
-  // 返回未分配的人员或能力较强的人员
+  // 返回能力较强的人员
   const recommended = personnel
     .filter(p => p.ability)
     .sort((a, b) => {

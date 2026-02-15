@@ -99,7 +99,6 @@ const allMenuList = [
     children: [
       { key: '/position/organization', title: '组织管理', permissionPrefix: 'position' },
       { key: '/position/members', title: '人员岗位', permissionPrefix: 'position' },
-      { key: '/position/transfer', title: '更换人员', permissionPrefix: 'position' },
       { key: '/position/tags', title: '岗位标签管理', permissionPrefix: 'position:tags' }
     ]
   },

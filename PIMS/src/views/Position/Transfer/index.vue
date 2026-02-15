@@ -1,5 +1,25 @@
 <template>
   <div class="transfer-personnel">
+    <!-- 当前待更换人员提示 -->
+    <a-alert
+      v-if="currentTransferMember"
+      class="mb-4"
+      type="info"
+      show-icon
+    >
+      <template #message>
+        <div class="flex items-center gap-3">
+          <a-avatar :src="currentTransferMember.personnel?.photo || undefined" :size="40" shape="square">
+            {{ currentTransferMember.personnel?.name?.charAt(0) }}
+          </a-avatar>
+          <div>
+            <div class="font-medium">当前待更换人员：{{ currentTransferMember.personnel?.name }}</div>
+            <div class="text-gray-500 text-sm">请在下方选择替换人员后点击"更换"按钮进行更换</div>
+          </div>
+        </div>
+      </template>
+    </a-alert>
+
     <!-- 推荐人员区域 -->
     <a-card class="recommend-card mb-4" :bodyStyle="{ padding: '16px' }">
       <template #title>
@@ -15,7 +35,7 @@
             @click="toggleSelectRecommend(person)"
           >
             <div class="match-score">{{ person.matchScore }}%匹配</div>
-            <a-avatar :src="person.photo" :size="80" shape="square" class="person-avatar">
+            <a-avatar :src="person.photo || undefined" :size="80" shape="square" class="person-avatar">
               {{ person.name?.charAt(0) }}
             </a-avatar>
             <div class="person-name">{{ person.name }}</div>
@@ -80,7 +100,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'avatar'">
-            <a-avatar :src="record.personnel?.photo" :size="36" shape="square">
+            <a-avatar :src="record.personnel?.photo || undefined" :size="36" shape="square">
               {{ record.personnel?.name?.charAt(0) }}
             </a-avatar>
           </template>
@@ -113,15 +133,19 @@
       <!-- 底部操作区 -->
       <div class="footer-actions">
         <a-space>
-          <a-button type="primary" :disabled="!selectedRowKeys.length && !selectedPersonnel.length" @click="openTransferModal">
-            更换
+          <a-button 
+            type="primary" 
+            :disabled="!canTransfer" 
+            @click="handleReplacementTransfer"
+          >
+            {{ currentTransferMember ? '确认更换' : '更换' }}
           </a-button>
-          <a-button @click="handleCancel">取消</a-button>
+          <a-button @click="handleCancel">{{ currentTransferMember ? '返回' : '取消' }}</a-button>
         </a-space>
       </div>
     </a-card>
 
-    <!-- 选择目标组织弹窗 -->
+    <!-- 选择目标组织弹窗（非替换模式时使用） -->
     <a-modal
       v-model:open="transferVisible"
       title="选择目标组织"
@@ -174,11 +198,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { message, Empty } from 'ant-design-vue'
 import { organizationApi, tagApi, categoryApi, positionTagApi } from '@/api'
 import type { Organization, OrganizationMember, Tag, Category, Personnel, PositionTag } from '@/types'
 import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
+
+const route = useRoute()
+const router = useRouter()
+
+// 从其他页面跳转过来的当前成员信息
+const currentTransferMember = ref<OrganizationMember | null>(null)
+const currentSourceOrgId = ref<string>('')
 
 // 推荐人员
 const recommendedList = ref<(Personnel & { matchScore: number })[]>([])
@@ -221,12 +253,28 @@ const rowSelection = computed(() => ({
   selectedRowKeys: selectedRowKeys.value,
   onChange: (keys: string[]) => {
     selectedRowKeys.value = keys
-  }
+    // 替换模式下，选择表格人员时清空推荐人员选择
+    if (currentTransferMember.value && keys.length > 0) {
+      selectedPersonnel.value = []
+    }
+  },
+  // 替换模式下只允许选择一个
+  type: currentTransferMember.value ? 'radio' : 'checkbox'
 }))
 
 // 总选中数
 const totalSelected = computed(() => {
   return selectedRowKeys.value.length + selectedPersonnel.value.length
+})
+
+// 是否可以更换
+const canTransfer = computed(() => {
+  if (currentTransferMember.value) {
+    // 替换模式：需要选择一个替换人员
+    return selectedRowKeys.value.length === 1 || selectedPersonnel.value.length === 1
+  }
+  // 批量模式
+  return selectedRowKeys.value.length > 0 || selectedPersonnel.value.length > 0
 })
 
 // 更换组织
@@ -335,6 +383,25 @@ const loadPositionTags = async () => {
   }
 }
 
+// 根据 URL 参数加载待更换的成员信息
+const loadTransferMemberFromQuery = async () => {
+  const { memberId, orgId } = route.query
+  if (memberId && orgId) {
+    currentSourceOrgId.value = orgId as string
+    try {
+      // 从指定组织获取成员列表，找到对应成员
+      const members = await organizationApi.getMembers(orgId as string)
+      const member = members?.find((m: OrganizationMember) => m.id === memberId)
+      if (member) {
+        currentTransferMember.value = member
+        message.info(`请为 ${member.personnel?.name || '该成员'} 选择替换人员后进行更换`)
+      }
+    } catch (e) {
+      console.error('加载待更换成员信息失败', e)
+    }
+  }
+}
+
 onMounted(() => {
   loadTree()
   loadRecommended()
@@ -342,6 +409,7 @@ onMounted(() => {
   loadTags()
   loadCategories()
   loadPositionTags()
+  loadTransferMemberFromQuery()
 })
 
 // 获取分类名称
@@ -358,11 +426,22 @@ const maskPhone = (phone?: string) => {
 
 // 切换推荐人员选中
 const toggleSelectRecommend = (person: Personnel) => {
-  const index = selectedPersonnel.value.indexOf(person.id)
-  if (index > -1) {
-    selectedPersonnel.value.splice(index, 1)
+  if (currentTransferMember.value) {
+    // 替换模式：单选，清空其他选择
+    if (selectedPersonnel.value.includes(person.id)) {
+      selectedPersonnel.value = []
+    } else {
+      selectedPersonnel.value = [person.id]
+      selectedRowKeys.value = [] // 清空表格选择
+    }
   } else {
-    selectedPersonnel.value.push(person.id)
+    // 批量模式：多选
+    const index = selectedPersonnel.value.indexOf(person.id)
+    if (index > -1) {
+      selectedPersonnel.value.splice(index, 1)
+    } else {
+      selectedPersonnel.value.push(person.id)
+    }
   }
 }
 
@@ -408,10 +487,61 @@ const getTargetOrgPositionTag = () => {
   return org?.positionTagId ? getPositionTagName(org.positionTagId) : ''
 }
 
-// 取消
+// 取消/返回
 const handleCancel = () => {
-  selectedRowKeys.value = []
-  selectedPersonnel.value = []
+  if (currentTransferMember.value) {
+    // 替换模式，返回人员岗位页面
+    router.push('/position/members')
+  } else {
+    // 普通模式，清空选择
+    selectedRowKeys.value = []
+    selectedPersonnel.value = []
+  }
+}
+
+// 替换更换 - 用选中的人员替换当前待更换人员
+const handleReplacementTransfer = async () => {
+  if (!canTransfer.value) return
+  
+  if (currentTransferMember.value) {
+    // 替换模式：将选中的人员替换到当前成员的组织，原人员退出成为自由人
+    let newMemberId = selectedRowKeys.value[0]
+    
+    // 如果是从推荐人员中选择的，需要通过 personnelId 找到对应的成员记录
+    if (!newMemberId && selectedPersonnel.value.length > 0) {
+      const selectedPersonnelId = selectedPersonnel.value[0]
+      const member = members.value.find(m => m.personnelId === selectedPersonnelId)
+      newMemberId = member?.id
+    }
+    
+    if (!newMemberId) {
+      message.warning('请选择替换人员')
+      return
+    }
+    
+    transferLoading.value = true
+    try {
+      // 1. 先将原人员从组织中移除（成为自由人）
+      await organizationApi.removeMember(currentTransferMember.value.id)
+      
+      // 2. 将选中的人员调入当前成员的组织
+      await organizationApi.transferMember({
+        memberId: newMemberId,
+        targetOrganizationId: currentSourceOrgId.value
+      })
+      
+      message.success('更换成功，原人员已退出组织')
+      // 返回人员岗位页面
+      router.push('/position/members')
+    } catch (e) {
+      message.error('更换失败')
+    } finally {
+      transferLoading.value = false
+    }
+  } else {
+    // 非替换模式：打开选择目标组织弹窗
+    openTransferModal()
+  }
 }
 
 // 打开更换弹窗
@@ -420,7 +550,7 @@ const openTransferModal = () => {
   transferVisible.value = true
 }
 
-// 确认更换
+// 确认更换（批量模式）
 const handleTransfer = async () => {
   if (!targetOrgId.value) {
     message.warning('请选择目标组织')

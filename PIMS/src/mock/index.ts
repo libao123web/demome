@@ -159,6 +159,7 @@ function initDefaultData() {
       'list|50': [{
         'id': () => generateId(),
         'name': '@cname',
+        'photo': '',  // 默认空，使用名字首字作为头像
         'phone': /^1[3-9]\d{9}$/,
         'gender|1': ['male', 'female'],
         'idCard': /^\d{6}(19|20)\d{9}[0-9X]$/,

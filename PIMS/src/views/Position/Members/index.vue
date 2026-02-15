@@ -73,7 +73,7 @@
                 <div class="position-tag">{{ getCurrentOrgPositionTag() }}</div>
                 <div class="card-content">
                   <a-avatar 
-                    :src="member.personnel?.photo" 
+                    :src="member.personnel?.photo || undefined" 
                     :size="64"
                     shape="square"
                     class="member-avatar"
@@ -104,34 +104,6 @@
       </a-col>
     </a-row>
 
-    <!-- 更换组织弹窗 -->
-    <a-modal
-      v-model:open="transferVisible"
-      title="更换组织"
-      :confirmLoading="transferLoading"
-      @ok="handleTransfer"
-      @cancel="transferVisible = false"
-    >
-      <a-alert 
-        :message="`将 ${currentMember?.personnel?.name} 从当前组织更换到其他组织`" 
-        type="info" 
-        show-icon 
-        class="mb-4"
-      />
-      <a-form layout="vertical">
-        <a-form-item label="目标组织" required>
-          <a-tree-select
-            v-model:value="targetOrgId"
-            :tree-data="treeData"
-            :field-names="{ label: 'name', value: 'id', children: 'children' }"
-            placeholder="请选择目标组织"
-            tree-default-expand-all
-            style="width: 100%"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
-
     <!-- 人员详情抽屉 -->
     <PersonnelDetailDrawer
       v-model:open="detailVisible"
@@ -142,10 +114,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { message, Empty } from 'ant-design-vue'
 import { organizationApi, tagApi, positionTagApi } from '@/api'
 import type { Organization, OrganizationMember, Tag, Personnel, PositionTag } from '@/types'
 import PersonnelDetailDrawer from '@/components/PersonnelDetailDrawer/index.vue'
+
+const router = useRouter()
 
 // 组织树
 const treeData = ref<Organization[]>([])
@@ -223,12 +198,6 @@ const filteredMembers = computed(() => {
   const start = (pagination.value.current - 1) * pagination.value.pageSize
   return result.slice(start, start + pagination.value.pageSize)
 })
-
-// 更换组织
-const transferVisible = ref(false)
-const transferLoading = ref(false)
-const currentMember = ref<OrganizationMember | null>(null)
-const targetOrgId = ref<string>('')
 
 // 人员详情
 const detailVisible = ref(false)
@@ -339,37 +308,17 @@ const handlePageChange = (page: number) => {
   pagination.value.current = page
 }
 
-// 打开更换弹窗
+// 打开更换弹窗 - 跳转到更换人员页面
 const openTransfer = (member: OrganizationMember) => {
-  currentMember.value = member
-  targetOrgId.value = ''
-  transferVisible.value = true
-}
-
-// 确认更换
-const handleTransfer = async () => {
-  if (!targetOrgId.value) {
-    message.warning('请选择目标组织')
-    return
-  }
-  
-  transferLoading.value = true
-  try {
-    await organizationApi.transferMember({
-      memberId: currentMember.value!.id,
-      targetOrganizationId: targetOrgId.value
-    })
-    message.success('更换成功')
-    transferVisible.value = false
-    // 刷新当前组织人员
-    if (selectedKeys.value.length) {
-      loadMembers(selectedKeys.value[0])
+  // 跳转到更换人员页面，传递当前成员和组织信息
+  router.push({
+    path: '/position/transfer',
+    query: {
+      memberId: member.id,
+      personnelId: member.personnelId,
+      orgId: selectedKeys.value[0] || ''
     }
-  } catch (e) {
-    message.error('更换失败')
-  } finally {
-    transferLoading.value = false
-  }
+  })
 }
 </script>
 

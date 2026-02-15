@@ -121,6 +121,35 @@
             <a-button type="link" @click="backToSearch">返回搜索</a-button>
           </div>
           
+          <!-- 推荐相似人员区域 -->
+          <a-card v-if="recommendedList.length > 0" class="recommend-card mb-4" :bodyStyle="{ padding: '16px' }">
+            <template #title>
+              <span class="text-blue-500 font-medium">推荐相似人员</span>
+            </template>
+            <div class="recommend-list">
+              <div 
+                v-for="person in recommendedList" 
+                :key="person.id" 
+                class="recommend-card-item"
+                @click="handleRecommendClick(person)"
+              >
+                <div class="match-score">{{ person.matchScore }}%匹配</div>
+                <a-avatar :src="person.photo || undefined" :size="80" shape="square" class="person-avatar">
+                  {{ person.name?.charAt(0) }}
+                </a-avatar>
+                <div class="person-name">{{ person.name }}</div>
+                <div class="ability-tags">
+                  <a-tag v-if="person.ability?.leadershipAbility" color="blue">
+                    领导能力 {{ person.ability.leadershipAbility }}
+                  </a-tag>
+                  <a-tag v-if="person.ability?.teamworkAbility" color="cyan">
+                    团队合作 {{ person.ability.teamworkAbility }}
+                  </a-tag>
+                </div>
+              </div>
+            </div>
+          </a-card>
+          
           <div class="results-grid">
             <a-spin :spinning="loading" style="width: 100%; min-height: 200px;">
               <div v-if="dataSource.length > 0" class="grid-wrapper">
@@ -196,6 +225,9 @@ const pagination = reactive({
   total: 0
 })
 
+// 推荐相似人员
+const recommendedList = ref<(Personnel & { matchScore: number })[]>([])
+
 // 筛选面板
 const filterCollapsed = ref(false)
 const activeFilterKeys = ref(['info', 'category', 'advanced'])
@@ -203,6 +235,35 @@ const activeFilterKeys = ref(['info', 'category', 'advanced'])
 // 相似人员
 const similarDrawerVisible = ref(false)
 const currentPersonnel = ref<Personnel | null>(null)
+
+// 加载推荐相似人员
+const loadRecommended = async () => {
+  try {
+    const res = await personnelApi.getList({ page: 1, pageSize: 50 })
+    // 筛选能力较强的人员作为推荐
+    const allPersonnel = res.data || []
+    recommendedList.value = allPersonnel
+      .filter(p => p.ability)
+      .sort((a, b) => {
+        const aScore = Object.values(a.ability || {}).reduce((sum: number, v: any) => sum + (v || 0), 0)
+        const bScore = Object.values(b.ability || {}).reduce((sum: number, v: any) => sum + (v || 0), 0)
+        return bScore - aScore
+      })
+      .slice(0, 6)
+      .map(p => ({
+        ...p,
+        matchScore: Math.floor(70 + Math.random() * 30) // 70-100的匹配度
+      }))
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// 点击推荐人员
+const handleRecommendClick = (person: Personnel) => {
+  currentPersonnel.value = person
+  similarDrawerVisible.value = true
+}
 
 // 加载基础数据
 const loadBaseData = async () => {
@@ -287,6 +348,7 @@ const handleSimilarClick = (personnel: Personnel) => {
 
 onMounted(() => {
   loadBaseData()
+  loadRecommended()
 })
 </script>
 
@@ -439,6 +501,67 @@ onMounted(() => {
       .results-count {
         font-size: 16px;
         font-weight: 500;
+      }
+    }
+    
+    .recommend-card {
+      margin-bottom: 24px;
+      
+      .recommend-list {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        
+        .recommend-card-item {
+          flex-shrink: 0;
+          width: 160px;
+          border: 2px solid #e8e8e8;
+          border-radius: 8px;
+          padding: 12px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s;
+          position: relative;
+          
+          &:hover {
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+          }
+          
+          .match-score {
+            position: absolute;
+            top: 0px;
+            right: 3px;
+            color: #70B603;
+            font-weight: bold;
+            font-size: 12px;
+            z-index: 10;
+          }
+          
+          .person-avatar {
+            background: linear-gradient(135deg, #1890ff, #096dd9);
+          }
+          
+          .person-name {
+            margin: 8px 0;
+            font-size: 16px;
+            font-weight: 500;
+          }
+          
+          .ability-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            
+            :deep(.ant-tag) {
+              margin: 0;
+              font-size: 10px;
+              padding: 0 4px;
+            }
+          }
+        }
       }
     }
     

@@ -1,10 +1,61 @@
+# 依赖目录
 node_modules/
+
+# 构建产物
 dist/
 dist-pwa/
 dist-static/
 dist-app/
 dist-hbuilder/
+
+# 发布包目录
+release/
+
+# HBuilderX 构建目录
 hbuilder/
-*.log
-cordova-app/
+
+# 原生项目目录（可重新生成）
 android/
+ios/
+
+# Cordova 目录（已废弃）
+cordova-app/
+
+# 日志文件
+*.log
+cordova-log.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 编辑器和 IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+nul
+
+# 测试覆盖率
+coverage/
+
+# TypeScript 缓存
+*.tsbuildinfo
+
+# 本地环境配置
+.env.local
+.env.*.local
+
+# npm lock 文件（使用 pnpm）
+package-lock.json
+
+# 临时文件
+*.tmp
+*.temp

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>档案管理系统</title>
+    <script>
+      // 5+ App 适配
+      document.addEventListener('plusready', function() {
+        if (window.plus) {
+          // 设置状态栏
+          plus.navigator.setStatusBarStyle('dark');
+          plus.navigator.setStatusBarBackground('#1890ff');
+          
+          // 处理 Android 返回键
+          var first = null;
+          plus.key.addEventListener('backbutton', function() {
+            var webview = plus.webview.currentWebview();
+            webview.canBack(function(e) {
+              if (e.canBack) {
+                webview.back();
+              } else {
+                if (!first) {
+                  first = new Date().getTime();
+                  plus.nativeUI.toast('再按一次退出应用');
+                  setTimeout(function() { first = null; }, 1500);
+                } else {
+                  if (new Date().getTime() - first < 1500) {
+                    plus.runtime.quit();
+                  }
+                }
+              }
+            });
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -2,3 +2,9 @@ node_modules/
 dist/
 dist-pwa/
 dist-static/
+dist-app/
+dist-hbuilder/
+hbuilder/
+*.log
+cordova-app/
+android/
